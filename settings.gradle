@@ -13,6 +13,6 @@ dependencyResolutionManagement {
     }
 }
 rootProject.name = "Onion Wrapper"
-include ':core'
-include ':java'
-include ':android'
+include ':onionwrapper-core'
+include ':onionwrapper-java'
+include ':onionwrapper-android'

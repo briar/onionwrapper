@@ -8,7 +8,7 @@ java {
 }
 
 dependencies {
-    implementation project(':core')
+    implementation project(':onionwrapper-core')
     def jna_version = '4.5.2'
     implementation "net.java.dev.jna:jna:$jna_version"
     implementation "net.java.dev.jna:jna-platform:$jna_version"

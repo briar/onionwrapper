@@ -27,6 +27,6 @@ android {
 }
 
 dependencies {
-    implementation project(':core')
+    implementation project(':onionwrapper-core')
     implementation 'org.briarproject:dont-kill-me-lib:0.2.6'
 }
