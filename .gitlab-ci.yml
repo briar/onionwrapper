@@ -51,5 +51,5 @@ bridge test:
       when: manual
       allow_failure: true
   script:
-    - OPTIONAL_TESTS=org.briarproject.onionwrapper.BridgeTest ./gradlew --info bramble-java:test --tests BridgeTest
+    - OPTIONAL_TESTS=org.briarproject.onionwrapper.BridgeTest ./gradlew --info onionwrapper-java:test --tests BridgeTest
   timeout: 4h
