@@ -12,4 +12,10 @@ dependencies {
     def jna_version = '4.5.2'
     implementation "net.java.dev.jna:jna:$jna_version"
     implementation "net.java.dev.jna:jna-platform:$jna_version"
+
+    testImplementation project(path: ':onionwrapper-core', configuration: 'testOutput')
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.briarproject:tor-linux:0.4.7.13-2'
+    testImplementation 'org.briarproject:obfs4proxy-linux:0.0.14-tor2'
+    testImplementation 'org.briarproject:snowflake-linux:2.5.1'
 }
