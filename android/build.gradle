@@ -1,0 +1,32 @@
+plugins {
+    id 'com.android.library'
+}
+
+android {
+    compileSdk 33
+
+    packagingOptions {
+        doNotStrip '**/*.so'
+    }
+
+    defaultConfig {
+        minSdk 16
+        targetSdk 33
+        versionCode 1
+        versionName "0.0.1"
+        consumerProguardFiles 'proguard-rules.pro'
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunnerArguments disableAnalytics: 'true'
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+}
+
+dependencies {
+    implementation project(':core')
+    implementation 'org.briarproject:dont-kill-me-lib:0.2.6'
+}

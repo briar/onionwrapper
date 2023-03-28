@@ -1,0 +1,15 @@
+plugins {
+    id 'java-library'
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
+
+dependencies {
+    api 'org.briarproject:null-safety:0.1'
+    api 'com.google.code.findbugs:jsr305:3.0.2'
+    api 'javax.inject:javax.inject:1'
+    api 'org.briarproject:jtorctl:0.5'
+}
