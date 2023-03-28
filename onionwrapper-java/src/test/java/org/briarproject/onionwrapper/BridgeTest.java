@@ -33,6 +33,7 @@ import static org.briarproject.onionwrapper.TestUtils.deleteTestDirectory;
 import static org.briarproject.onionwrapper.TestUtils.getArchitectureForTorBinary;
 import static org.briarproject.onionwrapper.TestUtils.getTestDirectory;
 import static org.briarproject.onionwrapper.TestUtils.isLinux;
+import static org.briarproject.onionwrapper.TestUtils.isOptionalTestEnabled;
 import static org.briarproject.onionwrapper.TorWrapper.TorState.CONNECTED;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeNotNull;
@@ -92,6 +93,7 @@ public class BridgeTest extends BaseTest {
 
 	@Before
 	public void setUp() {
+		assumeTrue(isOptionalTestEnabled(BridgeTest.class));
 		assumeTrue(isLinux());
 		assumeNotNull(getArchitectureForTorBinary());
 	}

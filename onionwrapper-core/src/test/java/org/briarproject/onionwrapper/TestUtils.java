@@ -9,6 +9,7 @@ import java.util.logging.Logger;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.ThreadSafe;
 
+import static java.util.Arrays.asList;
 import static java.util.logging.Level.WARNING;
 import static java.util.logging.Logger.getLogger;
 
@@ -66,5 +67,11 @@ public class TestUtils {
 		else if (arch.equals("aarch64")) return "aarch64";
 		else if (arch.equals("arm")) return "armhf";
 		return null;
+	}
+
+	public static boolean isOptionalTestEnabled(Class<?> testClass) {
+		String optionalTests = System.getenv("OPTIONAL_TESTS");
+		return optionalTests != null &&
+				asList(optionalTests.split(",")).contains(testClass.getName());
 	}
 }
