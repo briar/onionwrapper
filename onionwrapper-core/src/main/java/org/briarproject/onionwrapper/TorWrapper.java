@@ -148,6 +148,11 @@ public interface TorWrapper {
 		 * Called whenever a hidden service descriptor is uploaded.
 		 */
 		void onHsDescriptorUpload(String onion);
+
+		/**
+		 * Called whenever Tor detects that the system clock is skewed.
+		 */
+		void onClockSkewDetected(long skewSeconds);
 	}
 
 	class HiddenServiceProperties {

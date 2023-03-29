@@ -466,8 +466,11 @@ abstract class AbstractTorWrapper implements EventHandler, TorWrapper {
 			}
 		} else if (msg.startsWith("CLOCK_SKEW")) {
 			Long skew = parseLongArgument(msg, "SKEW");
-			if (skew != null && LOG.isLoggable(WARNING)) {
-				LOG.warning("Clock is skewed by " + skew + " seconds");
+			if (skew != null) {
+				if (LOG.isLoggable(WARNING)) {
+					LOG.warning("Clock is skewed by " + skew + " seconds");
+				}
+				state.onClockSkewDetected(skew);
 			}
 		}
 	}
@@ -596,8 +599,7 @@ abstract class AbstractTorWrapper implements EventHandler, TorWrapper {
 			bootstrapPercentage = percentage;
 			if (observer != null) {
 				// Notify the observer on the event executor
-				eventExecutor.execute(() ->
-						observer.onBootstrapPercentage(percentage));
+				eventExecutor.execute(() -> observer.onBootstrapPercentage(percentage));
 			}
 			updateState();
 		}
@@ -699,8 +701,14 @@ abstract class AbstractTorWrapper implements EventHandler, TorWrapper {
 		private synchronized void onHsDescriptorUploaded(String onion) {
 			if (observer != null) {
 				// Notify the observer on the event executor
-				eventExecutor.execute(() ->
-						observer.onHsDescriptorUpload(onion));
+				eventExecutor.execute(() -> observer.onHsDescriptorUpload(onion));
+			}
+		}
+
+		private synchronized void onClockSkewDetected(long skewSeconds) {
+			if (observer != null) {
+				// Notify the observer on the event executor
+				eventExecutor.execute(() -> observer.onClockSkewDetected(skewSeconds));
 			}
 		}
 	}
