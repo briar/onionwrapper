@@ -16,6 +16,7 @@ import static org.briarproject.onionwrapper.TestUtils.deleteTestDirectory;
 import static org.briarproject.onionwrapper.TestUtils.getArchitectureForTorBinary;
 import static org.briarproject.onionwrapper.TestUtils.getTestDirectory;
 import static org.briarproject.onionwrapper.TestUtils.isLinux;
+import static org.briarproject.onionwrapper.TestUtils.isWindows;
 import static org.briarproject.onionwrapper.TorWrapper.TorState.CONNECTED;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeNotNull;
@@ -34,7 +35,7 @@ public class BootstrapTest extends BaseTest {
 
 	@Before
 	public void setUp() {
-		assumeTrue(isLinux());
+		assumeTrue(isLinux() || isWindows());
 		assumeNotNull(getArchitectureForTorBinary());
 	}
 
@@ -47,8 +48,16 @@ public class BootstrapTest extends BaseTest {
 	@Test
 	public void testBootstrapping() throws Exception {
 		String architecture = requireNonNull(getArchitectureForTorBinary());
-		TorWrapper tor = new UnixTorWrapper(executor, executor, architecture, torDir,
-				CONTROL_PORT, SOCKS_PORT);
+		TorWrapper tor;
+		if (isLinux()) {
+			tor = new UnixTorWrapper(executor, executor, architecture, torDir,
+					CONTROL_PORT, SOCKS_PORT);
+		} else if (isWindows()) {
+			tor = new WindowsTorWrapper(executor, executor, architecture, torDir,
+					CONTROL_PORT, SOCKS_PORT);
+		} else {
+			throw new AssertionError("Running on unsupported OS");
+		}
 
 		boolean connected;
 		try {
