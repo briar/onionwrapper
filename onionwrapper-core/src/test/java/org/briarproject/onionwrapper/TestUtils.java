@@ -12,7 +12,9 @@ import javax.annotation.concurrent.ThreadSafe;
 import static java.util.Arrays.asList;
 import static java.util.logging.Level.WARNING;
 import static java.util.logging.Logger.getLogger;
-import static org.briarproject.onionwrapper.StringUtils.startsWithIgnoreCase;
+import static org.briarproject.onionwrapper.util.OsUtils.isLinux;
+import static org.briarproject.onionwrapper.util.OsUtils.isMac;
+import static org.briarproject.onionwrapper.util.OsUtils.isWindows;
 
 @ThreadSafe
 @NotNullByDefault
@@ -54,29 +56,18 @@ public class TestUtils {
 		}
 	}
 
-	public static boolean isLinux() {
-		String os = System.getProperty("os.name");
-		return os != null && os.contains("Linux");
-	}
-
-	public static boolean isWindows() {
-		String os = System.getProperty("os.name");
-		return os != null && startsWithIgnoreCase(os, "Win");
-	}
-
-	public static boolean isMac() {
-		String os = System.getProperty("os.name");
-		return os != null && os.equalsIgnoreCase("Mac OS X");
-	}
-
 	@Nullable
 	public static String getArchitectureForTorBinary() {
 		String arch = System.getProperty("os.arch");
 		if (arch == null) return null;
-		//noinspection IfCanBeSwitch
-		if (arch.equals("amd64")) return "x86_64";
-		else if (arch.equals("aarch64")) return "aarch64";
-		else if (arch.equals("arm")) return "armhf";
+		if (isLinux() || isWindows()) {
+			//noinspection IfCanBeSwitch
+			if (arch.equals("amd64")) return "x86_64";
+			else if (arch.equals("aarch64")) return "aarch64";
+			else if (arch.equals("arm")) return "armhf";
+		} else if (isMac()) {
+			return "any";
+		}
 		return null;
 	}
 

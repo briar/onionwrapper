@@ -15,11 +15,12 @@ import static org.briarproject.nullsafety.NullSafety.requireNonNull;
 import static org.briarproject.onionwrapper.TestUtils.deleteTestDirectory;
 import static org.briarproject.onionwrapper.TestUtils.getArchitectureForTorBinary;
 import static org.briarproject.onionwrapper.TestUtils.getTestDirectory;
-import static org.briarproject.onionwrapper.TestUtils.isLinux;
-import static org.briarproject.onionwrapper.TestUtils.isWindows;
 import static org.briarproject.onionwrapper.TorWrapper.TorState.CONNECTED;
 import static org.briarproject.onionwrapper.TorWrapper.TorState.STARTED;
 import static org.briarproject.onionwrapper.TorWrapper.TorState.STOPPED;
+import static org.briarproject.onionwrapper.util.OsUtils.isLinux;
+import static org.briarproject.onionwrapper.util.OsUtils.isMac;
+import static org.briarproject.onionwrapper.util.OsUtils.isWindows;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeNotNull;
@@ -38,7 +39,7 @@ public class BootstrapTest extends BaseTest {
 
 	@Before
 	public void setUp() {
-		assumeTrue(isLinux() || isWindows());
+		assumeTrue(isLinux() || isWindows() || isMac());
 		assumeNotNull(getArchitectureForTorBinary());
 	}
 
@@ -52,7 +53,7 @@ public class BootstrapTest extends BaseTest {
 	public void testBootstrapping() throws Exception {
 		String architecture = requireNonNull(getArchitectureForTorBinary());
 		TorWrapper tor;
-		if (isLinux()) {
+		if (isLinux() || isMac()) {
 			tor = new UnixTorWrapper(executor, executor, architecture, torDir,
 					CONTROL_PORT, SOCKS_PORT);
 		} else if (isWindows()) {

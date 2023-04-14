@@ -3,34 +3,40 @@ package org.briarproject.onionwrapper;
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.briarproject.onionwrapper.util.OsUtils.isWindows;
+import static org.briarproject.onionwrapper.util.OsUtils.isMac;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assume.assumeTrue;
 
-public class ResourcesWindowsTest {
+public class ResourcesMacTest {
 
 	@Before
 	public void setUp() {
-		assumeTrue(isWindows());
+		assumeTrue(isMac());
 	}
 
 	@Test
 	public void testCanLoadTor() {
-		testCanLoadResource("x86_64/tor.exe");
+		testCanLoadResource("any/tor");
+	}
+
+	@Test
+	public void testCanLoadLibEvent() {
+		testCanLoadResource("any/libevent-2.1.7.dylib");
 	}
 
 	@Test
 	public void testCanLoadObfs4() {
-		testCanLoadResource("x86_64/obfs4proxy.exe");
+		testCanLoadResource("any/obfs4proxy");
 	}
 
 	@Test
 	public void testCanLoadSnowflake() {
-		testCanLoadResource("x86_64/snowflake.exe");
+		testCanLoadResource("any/snowflake");
 	}
 
 	private void testCanLoadResource(String name) {
-		ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+		ClassLoader classLoader =
+				Thread.currentThread().getContextClassLoader();
 		assertNotNull(classLoader.getResourceAsStream(name));
 	}
 }

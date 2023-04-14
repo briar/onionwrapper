@@ -50,6 +50,7 @@ import static org.briarproject.onionwrapper.TorWrapper.TorState.STARTED;
 import static org.briarproject.onionwrapper.TorWrapper.TorState.STARTING;
 import static org.briarproject.onionwrapper.TorWrapper.TorState.STOPPED;
 import static org.briarproject.onionwrapper.TorWrapper.TorState.STOPPING;
+import static org.briarproject.onionwrapper.util.OsUtils.isMac;
 
 @InterfaceNotNullByDefault
 abstract class AbstractTorWrapper implements EventHandler, TorWrapper {
@@ -108,6 +109,10 @@ abstract class AbstractTorWrapper implements EventHandler, TorWrapper {
 
 	protected File getTorExecutableFile() {
 		return new File(torDirectory, "tor");
+	}
+
+	protected File getLibEventFile() {
+		return new File(torDirectory, "libevent-2.1.7.dylib");
 	}
 
 	@Override
@@ -202,6 +207,9 @@ abstract class AbstractTorWrapper implements EventHandler, TorWrapper {
 		//noinspection ResultOfMethodCallIgnored
 		doneFile.delete();
 		installTorExecutable();
+		if (isMac()) {
+			installLibEvent();
+		}
 		installObfs4Executable();
 		installSnowflakeExecutable();
 		extract(getConfigInputStream(), configFile);
@@ -223,6 +231,14 @@ abstract class AbstractTorWrapper implements EventHandler, TorWrapper {
 		File torFile = getTorExecutableFile();
 		extract(getExecutableInputStream("tor"), torFile);
 		if (!torFile.setExecutable(true, true)) throw new IOException();
+	}
+
+	protected void installLibEvent() throws IOException {
+		if (LOG.isLoggable(INFO)) {
+			LOG.info("Installing libevent binary for " + architecture);
+		}
+		File libEventFile = getLibEventFile();
+		extract(getExecutableInputStream("libevent-2.1.7.dylib"), libEventFile);
 	}
 
 	protected void installObfs4Executable() throws IOException {

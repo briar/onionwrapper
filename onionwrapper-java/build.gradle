@@ -1,5 +1,4 @@
-import static org.briarproject.onionwrapper.OS.Linux
-import static org.briarproject.onionwrapper.OS.Windows
+import static org.briarproject.onionwrapper.OS.*
 import static org.briarproject.onionwrapper.OsUtils.currentOS
 
 plugins {
@@ -19,7 +18,7 @@ checkstyle {
 
 dependencies {
     api project(':onionwrapper-core')
-    def jna_version = '4.5.2'
+    def jna_version = '5.10.0'
     implementation "net.java.dev.jna:jna:$jna_version"
     implementation "net.java.dev.jna:jna-platform:$jna_version"
 
@@ -29,6 +28,10 @@ dependencies {
         testImplementation "org.briarproject:tor-$currentOS.id:0.4.7.13-2"
         testImplementation "org.briarproject:obfs4proxy-$currentOS.id:0.0.14-tor2"
         testImplementation "org.briarproject:snowflake-$currentOS.id:2.5.1"
+    } else if (currentOS == MacOS) {
+        testImplementation "org.briarproject:tor-macos-torbrowser:0.4.7.13"
+        testImplementation "org.briarproject:obfs4proxy-macos-torbrowser:0.0.14"
+        testImplementation "org.briarproject:snowflake-macos-torbrowser:2.5.1"
     }
 }
 
