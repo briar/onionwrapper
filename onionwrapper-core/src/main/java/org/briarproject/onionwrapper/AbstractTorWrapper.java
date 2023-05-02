@@ -107,7 +107,8 @@ abstract class AbstractTorWrapper implements EventHandler, TorWrapper {
 		return new File(torDirectory, "tor");
 	}
 
-	protected File getObfs4ExecutableFile() {
+    @Override
+	public File getObfs4ExecutableFile() {
 		return new File(torDirectory, "obfs4proxy");
 	}
 

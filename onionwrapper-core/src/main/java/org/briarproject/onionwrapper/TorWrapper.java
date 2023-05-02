@@ -2,6 +2,7 @@ package org.briarproject.onionwrapper;
 
 import org.briarproject.nullsafety.NotNullByDefault;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.logging.Logger;
@@ -98,6 +99,11 @@ public interface TorWrapper {
 	 * IPv4 is used by default.
 	 */
 	void enableIpv6(boolean ipv6Only) throws IOException;
+
+    /**
+     * Returns the Obfs4 executable as a File for use with Moat.
+     */
+    File getObfs4ExecutableFile();
 
 	/**
 	 * The state of the Tor wrapper.
