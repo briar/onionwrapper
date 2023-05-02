@@ -16,7 +16,8 @@ public interface TorWrapper {
 	Logger LOG = getLogger(TorWrapper.class.getName());
 
 	/**
-	 * Starts the Tor process.
+	 * Starts the Tor process, but does not yet connect to the Tor Network.
+     * Call {@link #enableNetwork(boolean)} for this.
 	 * <p>
 	 * This method must only be called once. To restart the Tor process, stop
 	 * this wrapper instance and then create a new instance.
