@@ -47,6 +47,11 @@ bridge test:
     - if: '$CI_PIPELINE_SOURCE == "schedule"'
       when: on_success
       allow_failure: false
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      changes:
+        - "onionwrapper-core/src/main/resources/*"
+      when: always
+      allow_failure: false
     - if: '$CI_COMMIT_TAG == null'
       when: manual
       allow_failure: true
