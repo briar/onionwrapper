@@ -29,9 +29,9 @@ dependencies {
         testImplementation "org.briarproject:obfs4proxy-$currentOS.id:0.0.14-tor2"
         testImplementation "org.briarproject:snowflake-$currentOS.id:2.5.1"
     } else if (currentOS == MacOS) {
-        testImplementation "org.briarproject:tor-macos-torbrowser:0.4.7.13"
-        testImplementation "org.briarproject:obfs4proxy-macos-torbrowser:0.0.14"
-        testImplementation "org.briarproject:snowflake-macos-torbrowser:2.5.1"
+        testImplementation "org.briarproject:tor-macos-pipelines:0.4.7.13-2"
+        testImplementation "org.briarproject:obfs4proxy-macos-pipelines:0.0.14-tor2"
+        testImplementation "org.briarproject:snowflake-macos-pipelines:2.5.1"
     }
 }
 

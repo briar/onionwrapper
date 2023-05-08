@@ -16,22 +16,22 @@ public class ResourcesMacTest {
 
 	@Test
 	public void testCanLoadTor() {
-		testCanLoadResource("any/tor");
+		testCanLoadResource("x86_64/tor");
 	}
 
 	@Test
 	public void testCanLoadLibEvent() {
-		testCanLoadResource("any/libevent-2.1.7.dylib");
+		testCanLoadResource("x86_64/libevent-2.1.7.dylib");
 	}
 
 	@Test
 	public void testCanLoadObfs4() {
-		testCanLoadResource("any/obfs4proxy");
+		testCanLoadResource("x86_64/obfs4proxy");
 	}
 
 	@Test
 	public void testCanLoadSnowflake() {
-		testCanLoadResource("any/snowflake");
+		testCanLoadResource("x86_64/snowflake");
 	}
 
 	private void testCanLoadResource(String name) {

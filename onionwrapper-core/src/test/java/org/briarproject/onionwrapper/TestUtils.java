@@ -66,7 +66,8 @@ public class TestUtils {
 			else if (arch.equals("aarch64")) return "aarch64";
 			else if (arch.equals("arm")) return "armhf";
 		} else if (isMac()) {
-			return "any";
+			if (arch.equals("amd64")) return "x86_64";
+			else if (arch.equals("aarch64")) return "aarch64";
 		}
 		return null;
 	}
