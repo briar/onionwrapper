@@ -29,7 +29,7 @@ android {
 
 dependencies {
     api project(':onionwrapper-core')
-    api 'org.briarproject:dont-kill-me-lib:0.2.6'
+    api 'org.briarproject:dont-kill-me-lib:0.2.7'
 }
 
 mavenPublishing {
