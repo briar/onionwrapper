@@ -2,6 +2,7 @@ package org.briarproject.onionwrapper;
 
 import org.briarproject.nullsafety.NotNullByDefault;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.logging.Logger;
@@ -16,7 +17,8 @@ public interface TorWrapper {
 	Logger LOG = getLogger(TorWrapper.class.getName());
 
 	/**
-	 * Starts the Tor process.
+	 * Starts the Tor process, but does not yet connect to the Tor Network.
+     * Call {@link #enableNetwork(boolean)} for this.
 	 * <p>
 	 * This method must only be called once. To restart the Tor process, stop
 	 * this wrapper instance and then create a new instance.
@@ -97,6 +99,11 @@ public interface TorWrapper {
 	 * IPv4 is used by default.
 	 */
 	void enableIpv6(boolean ipv6Only) throws IOException;
+
+    /**
+     * Returns the Obfs4 executable as a File for use with Moat.
+     */
+    File getObfs4ExecutableFile();
 
 	/**
 	 * The state of the Tor wrapper.
