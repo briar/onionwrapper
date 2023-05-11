@@ -1,5 +1,8 @@
 package org.briarproject.onionwrapper;
 
+import org.briarproject.nullsafety.NotNullByDefault;
+
+@NotNullByDefault
 public enum OS {
 	Linux("linux"),
 	Windows("windows"),

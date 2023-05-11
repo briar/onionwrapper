@@ -1,7 +1,10 @@
 package org.briarproject.onionwrapper;
 
+import org.briarproject.nullsafety.NotNullByDefault;
+
 import static org.briarproject.onionwrapper.StringUtils.startsWithIgnoreCase;
 
+@NotNullByDefault
 public class OsUtils {
 
 	public static final OS currentOS;

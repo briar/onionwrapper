@@ -1,5 +1,8 @@
 package org.briarproject.onionwrapper;
 
+import org.briarproject.nullsafety.NotNullByDefault;
+
+@NotNullByDefault
 public class StringUtils {
 
 	// see https://stackoverflow.com/a/38947571
