@@ -346,6 +346,9 @@ abstract class AbstractTorWrapper implements EventHandler, TorWrapper {
 	@Override
 	public void enableBridges(List<String> bridges) throws IOException {
 		if (!state.setBridges(bridges)) return; // Unchanged
+		if (bridges.isEmpty()) {
+			throw new IllegalArgumentException("Bridges can't be empty.");
+		}
 		List<String> conf = new ArrayList<>(bridges.size() + 1);
 		conf.add("UseBridges 1");
 		conf.addAll(bridges);
