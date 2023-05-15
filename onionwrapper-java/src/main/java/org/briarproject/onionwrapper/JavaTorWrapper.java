@@ -20,14 +20,12 @@ abstract class JavaTorWrapper extends AbstractTorWrapper {
 			File torDirectory,
 			int torSocksPort,
 			int torControlPort) {
-		super(ioExecutor, eventExecutor, architecture, torDirectory,
-				torSocksPort, torControlPort);
+		super(ioExecutor, eventExecutor, architecture, torDirectory, torSocksPort, torControlPort);
 	}
 
 	@Override
 	protected long getLastUpdateTime() {
-		CodeSource codeSource =
-				getClass().getProtectionDomain().getCodeSource();
+		CodeSource codeSource = getClass().getProtectionDomain().getCodeSource();
 		if (codeSource == null) throw new AssertionError("CodeSource null");
 		try {
 			URI path = codeSource.getLocation().toURI();
@@ -39,8 +37,7 @@ abstract class JavaTorWrapper extends AbstractTorWrapper {
 	}
 
 	@Override
-	protected InputStream getResourceInputStream(String name,
-			String extension) {
+	protected InputStream getResourceInputStream(String name, String extension) {
 		ClassLoader cl = getClass().getClassLoader();
 		return requireNonNull(cl.getResourceAsStream(name + extension));
 	}

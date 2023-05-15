@@ -19,8 +19,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Executor;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -44,7 +45,11 @@ import static org.briarproject.onionwrapper.TorUtils.tryToClose;
 import static org.briarproject.onionwrapper.TorWrapper.TorState.CONNECTED;
 import static org.briarproject.onionwrapper.TorWrapper.TorState.CONNECTING;
 import static org.briarproject.onionwrapper.TorWrapper.TorState.DISABLED;
-import static org.briarproject.onionwrapper.TorWrapper.TorState.STARTING_STOPPING;
+import static org.briarproject.onionwrapper.TorWrapper.TorState.NOT_STARTED;
+import static org.briarproject.onionwrapper.TorWrapper.TorState.STARTED;
+import static org.briarproject.onionwrapper.TorWrapper.TorState.STARTING;
+import static org.briarproject.onionwrapper.TorWrapper.TorState.STOPPED;
+import static org.briarproject.onionwrapper.TorWrapper.TorState.STOPPING;
 
 @InterfaceNotNullByDefault
 abstract class AbstractTorWrapper implements EventHandler, TorWrapper {
@@ -63,8 +68,7 @@ abstract class AbstractTorWrapper implements EventHandler, TorWrapper {
 	private static final String OWNER = "__OwningControllerProcess";
 	private static final int COOKIE_TIMEOUT_MS = 3000;
 	private static final int COOKIE_POLLING_INTERVAL_MS = 200;
-	private static final Pattern BOOTSTRAP_PERCENTAGE =
-			Pattern.compile(".*PROGRESS=(\\d{1,3}).*");
+	private static final Pattern BOOTSTRAP_PERCENTAGE = Pattern.compile(".*PROGRESS=(\\d{1,3}).*");
 
 	protected final Executor ioExecutor;
 	protected final Executor eventExecutor;
@@ -72,10 +76,10 @@ abstract class AbstractTorWrapper implements EventHandler, TorWrapper {
 	private final File torDirectory, configFile, doneFile, cookieFile;
 	private final int torSocksPort;
 	private final int torControlPort;
-	private final AtomicBoolean used = new AtomicBoolean(false);
 
 	protected final NetworkState state = new NetworkState();
 
+	private volatile Process torProcess = null;
 	private volatile Socket controlSocket = null;
 	private volatile TorControlConnection controlConnection = null;
 
@@ -83,8 +87,7 @@ abstract class AbstractTorWrapper implements EventHandler, TorWrapper {
 
 	protected abstract long getLastUpdateTime();
 
-	protected abstract InputStream getResourceInputStream(String name,
-			String extension);
+	protected abstract InputStream getResourceInputStream(String name, String extension);
 
 	AbstractTorWrapper(Executor ioExecutor,
 			Executor eventExecutor,
@@ -123,7 +126,7 @@ abstract class AbstractTorWrapper implements EventHandler, TorWrapper {
 
 	@Override
 	public void start() throws IOException, InterruptedException {
-		if (used.getAndSet(true)) throw new IllegalStateException();
+		state.setStarting();
 		if (!torDirectory.exists()) {
 			if (!torDirectory.mkdirs()) {
 				throw new IOException("Could not create Tor directory");
@@ -133,17 +136,16 @@ abstract class AbstractTorWrapper implements EventHandler, TorWrapper {
 		if (!assetsAreUpToDate()) installAssets();
 		// Start from the default config every time
 		extract(getConfigInputStream(), configFile);
-		if (cookieFile.exists() && !cookieFile.delete())
+		if (cookieFile.exists() && !cookieFile.delete()) {
 			LOG.warning("Old auth cookie not deleted");
+		}
 		// Start a new Tor process
 		LOG.info("Starting Tor");
 		File torFile = getTorExecutableFile();
 		String torPath = torFile.getAbsolutePath();
 		String configPath = configFile.getAbsolutePath();
 		String pid = String.valueOf(getProcessId());
-		Process torProcess;
-		ProcessBuilder pb =
-				new ProcessBuilder(torPath, "-f", configPath, OWNER, pid);
+		ProcessBuilder pb = new ProcessBuilder(torPath, "-f", configPath, OWNER, pid);
 		Map<String, String> env = pb.environment();
 		env.put("HOME", torDirectory.getAbsolutePath());
 		pb.directory(torDirectory);
@@ -154,7 +156,7 @@ abstract class AbstractTorWrapper implements EventHandler, TorWrapper {
 			throw new IOException(e);
 		}
 		// Wait for the Tor process to start
-		waitForTorToStart(torProcess);
+		waitForTorToStart(requireNonNull(torProcess));
 		// Wait for the auth cookie file to be created/updated
 		long start = System.currentTimeMillis();
 		while (cookieFile.length() < 32) {
@@ -243,8 +245,7 @@ abstract class AbstractTorWrapper implements EventHandler, TorWrapper {
 
 	private InputStream getExecutableInputStream(String basename) {
 		String ext = getExecutableExtension();
-		return requireNonNull(
-				getResourceInputStream(architecture + "/" + basename, ext));
+		return requireNonNull(getResourceInputStream(architecture + "/" + basename, ext));
 	}
 
 	protected String getExecutableExtension() {
@@ -265,7 +266,6 @@ abstract class AbstractTorWrapper implements EventHandler, TorWrapper {
 		append(strb, "CookieAuthentication", 1);
 		append(strb, "DataDirectory", dataDirectory.getAbsolutePath());
 		append(strb, "DisableNetwork", 1);
-		append(strb, "RunAsDaemon", 1);
 		append(strb, "SafeSocks", 1);
 		append(strb, "SocksPort", torSocksPort);
 		strb.append("GeoIPFile\n");
@@ -295,29 +295,48 @@ abstract class AbstractTorWrapper implements EventHandler, TorWrapper {
 		}
 	}
 
-	protected void waitForTorToStart(Process torProcess)
-			throws InterruptedException, IOException {
-		Scanner stdout = new Scanner(torProcess.getInputStream());
-		// Log the first line of stdout (contains Tor and library versions)
-		if (stdout.hasNextLine()) LOG.info(stdout.nextLine());
-		// Read the process's stdout (and redirected stderr) until it detaches
-		while (stdout.hasNextLine()) stdout.nextLine();
-		stdout.close();
-		// Wait for the process to detach or exit
-		int exit = torProcess.waitFor();
-		if (exit != 0) throw new IOException("Tor exited with value " + exit);
+	protected void waitForTorToStart(Process torProcess) throws InterruptedException, IOException {
+		// Wait for the control port to be opened, then continue to read Tor's
+		// stdout and stderr in a background thread until it exits.
+		BlockingQueue<Boolean> success = new ArrayBlockingQueue<>(1);
+		ioExecutor.execute(() -> {
+			boolean started = false;
+			// Read the process's stdout (and redirected stderr)
+			Scanner stdout = new Scanner(torProcess.getInputStream());
+			// Log the first line of stdout (contains Tor and library versions)
+			if (stdout.hasNextLine()) LOG.info(stdout.nextLine());
+			// Startup has succeeded when the control port is open
+			while (stdout.hasNextLine()) {
+				String line = stdout.nextLine();
+				if (!started && line.contains("Opened Control listener")) {
+					success.add(true);
+					started = true;
+				}
+			}
+			stdout.close();
+			// If the control port wasn't opened, startup has failed
+			if (!started) success.add(false);
+			// Wait for the process to exit
+			try {
+				int exit = torProcess.waitFor();
+				if (LOG.isLoggable(INFO)) LOG.info("Tor exited with value " + exit);
+			} catch (InterruptedException e1) {
+				LOG.warning("Interrupted while waiting for Tor to exit");
+				Thread.currentThread().interrupt();
+			}
+		});
+		// Wait for the startup result
+		if (!success.take()) throw new IOException();
 	}
 
 	@Override
 	public HiddenServiceProperties publishHiddenService(int localPort,
 			int remotePort, @Nullable String privKey) throws IOException {
-		Map<Integer, String> portLines =
-				singletonMap(remotePort, "127.0.0.1:" + localPort);
+		Map<Integer, String> portLines = singletonMap(remotePort, "127.0.0.1:" + localPort);
 		// Use the control connection to set up the hidden service
 		Map<String, String> response;
 		if (privKey == null) {
-			response = getControlConnection().addOnion("NEW:ED25519-V3",
-					portLines, null);
+			response = getControlConnection().addOnion("NEW:ED25519-V3", portLines, null);
 		} else {
 			response = getControlConnection().addOnion(privKey, portLines);
 		}
@@ -362,14 +381,23 @@ abstract class AbstractTorWrapper implements EventHandler, TorWrapper {
 	}
 
 	@Override
-	public void stop() throws IOException {
-		state.setStopped();
-		if (controlSocket != null && controlConnection != null) {
-			LOG.info("Stopping Tor");
-			try {
+	public void stop() throws IOException, InterruptedException {
+		state.setStopping();
+		try {
+			if (controlConnection != null) {
 				controlConnection.shutdownTor("TERM");
+			}
+		} finally {
+			controlConnection = null;
+			tryToClose(controlSocket, LOG, WARNING);
+			controlSocket = null;
+			try {
+				if (torProcess != null) {
+					torProcess.waitFor();
+				}
 			} finally {
-				tryToClose(controlSocket, LOG, WARNING);
+				torProcess = null;
+				state.setStopped();
 			}
 		}
 	}
@@ -536,6 +564,10 @@ abstract class AbstractTorWrapper implements EventHandler, TorWrapper {
 		return controlConnection;
 	}
 
+	private enum ProcessState {
+		NOT_STARTED, STARTING, STARTED, STOPPING, STOPPED
+	}
+
 	@ThreadSafe
 	@NotNullByDefault
 	private class NetworkState {
@@ -545,9 +577,10 @@ abstract class AbstractTorWrapper implements EventHandler, TorWrapper {
 		private Observer observer = null;
 
 		@GuardedBy("this")
-		private boolean started = false,
-				stopped = false,
-				networkInitialised = false,
+		private ProcessState processState = ProcessState.NOT_STARTED;
+
+		@GuardedBy("this")
+		private boolean networkInitialised = false,
 				networkEnabled = false,
 				paddingEnabled = false,
 				ipv6Enabled = false,
@@ -566,8 +599,7 @@ abstract class AbstractTorWrapper implements EventHandler, TorWrapper {
 		@Nullable
 		private TorState state = null;
 
-		private synchronized void setObserver(
-				@Nullable Observer observer) {
+		private synchronized void setObserver(@Nullable Observer observer) {
 			this.observer = observer;
 		}
 
@@ -583,18 +615,50 @@ abstract class AbstractTorWrapper implements EventHandler, TorWrapper {
 			}
 		}
 
+		private synchronized void setStarting() {
+			// It's legal to call start() if the wrapper has never been started, or has been
+			// started and then stopped
+			if (processState != ProcessState.NOT_STARTED && processState != ProcessState.STOPPED) {
+				throw new IllegalStateException();
+			}
+			processState = ProcessState.STARTING;
+			updateState();
+		}
+
 		private synchronized void setStarted() {
-			started = true;
+			// It's illegal to call start() and stop() concurrently
+			if (processState != ProcessState.STARTING) throw new IllegalStateException();
+			processState = ProcessState.STARTED;
 			updateState();
 		}
 
 		@SuppressWarnings("BooleanMethodIsAlwaysInverted")
 		private synchronized boolean isTorRunning() {
-			return started && !stopped;
+			return processState == ProcessState.STARTED;
+		}
+
+		private synchronized void setStopping() {
+			// It's legal to call stop() if start() has returned or thrown an exception
+			if (processState != ProcessState.STARTING && processState != ProcessState.STARTED) {
+				throw new IllegalStateException();
+			}
+			processState = ProcessState.STOPPING;
+			updateState();
 		}
 
 		private synchronized void setStopped() {
-			stopped = true;
+			// It's illegal to call start() and stop() concurrently
+			if (processState != ProcessState.STOPPING) throw new IllegalStateException();
+			processState = ProcessState.STOPPED;
+			// Reset all state related to the process that has stopped
+			networkInitialised = false;
+			networkEnabled = false;
+			paddingEnabled = false;
+			ipv6Enabled = false;
+			circuitBuilt = false;
+			bootstrapPercentage = 0;
+			bridges = emptyList();
+			orConnectionsConnected = 0;
 			updateState();
 		}
 
@@ -668,8 +732,11 @@ abstract class AbstractTorWrapper implements EventHandler, TorWrapper {
 		}
 
 		private synchronized TorState getState() {
-			if (!started || stopped) return STARTING_STOPPING;
-			if (!networkInitialised) return CONNECTING;
+			if (processState == ProcessState.NOT_STARTED) return NOT_STARTED;
+			if (processState == ProcessState.STARTING) return STARTING;
+			if (processState == ProcessState.STOPPING) return STOPPING;
+			if (processState == ProcessState.STOPPED) return STOPPED;
+			if (!networkInitialised) return STARTED;
 			if (!networkEnabled) return DISABLED;
 			return bootstrapPercentage == 100 && circuitBuilt
 					&& orConnectionsConnected > 0 ? CONNECTED : CONNECTING;
