@@ -133,7 +133,7 @@ public class AndroidTorWrapper extends AbstractTorWrapper {
 	}
 
 	@Override
-    public File getObfs4ExecutableFile() {
+	public File getObfs4ExecutableFile() {
 		return obfs4Lib.exists() ? obfs4Lib : super.getObfs4ExecutableFile();
 	}
 

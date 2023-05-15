@@ -10,17 +10,17 @@ import javax.inject.Inject;
 @NotNullByDefault
 class JavaLocationUtils implements LocationUtils {
 
-    private static final Logger LOG =
-            Logger.getLogger(JavaLocationUtils.class.getName());
+	private static final Logger LOG =
+			Logger.getLogger(JavaLocationUtils.class.getName());
 
-    @Inject
-    JavaLocationUtils() {
-    }
+	@Inject
+	JavaLocationUtils() {
+	}
 
-    @Override
-    public String getCurrentCountry() {
-        LOG.info("Using user-defined locale");
-        return Locale.getDefault().getCountry();
-    }
+	@Override
+	public String getCurrentCountry() {
+		LOG.info("Using user-defined locale");
+		return Locale.getDefault().getCountry();
+	}
 
 }
