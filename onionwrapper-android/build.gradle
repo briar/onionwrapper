@@ -1,6 +1,7 @@
 plugins {
     id 'com.android.library'
     id 'com.vanniktech.maven.publish' version '0.18.0'
+    id 'checkstyle'
 }
 
 android {
@@ -25,6 +26,10 @@ android {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
+}
+
+checkstyle {
+    configFile = new File('../config/checkstyle/checkstyle.xml')
 }
 
 dependencies {

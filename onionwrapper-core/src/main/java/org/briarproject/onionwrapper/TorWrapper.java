@@ -18,7 +18,7 @@ public interface TorWrapper {
 
 	/**
 	 * Starts the Tor process, but does not yet connect to the Tor Network.
-     * Call {@link #enableNetwork(boolean)} for this.
+	 * Call {@link #enableNetwork(boolean)} for this.
 	 * <p>
 	 * This method must only be called once. To restart the Tor process, stop
 	 * this wrapper instance and then create a new instance.
@@ -100,10 +100,10 @@ public interface TorWrapper {
 	 */
 	void enableIpv6(boolean ipv6Only) throws IOException;
 
-    /**
-     * Returns the Obfs4 executable as a File for use with Moat.
-     */
-    File getObfs4ExecutableFile();
+	/**
+	 * Returns the Obfs4 executable as a File for use with Moat.
+	 */
+	File getObfs4ExecutableFile();
 
 	/**
 	 * The state of the Tor wrapper.
