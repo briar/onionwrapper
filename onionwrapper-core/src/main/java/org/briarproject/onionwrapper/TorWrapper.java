@@ -17,19 +17,33 @@ public interface TorWrapper {
 	Logger LOG = getLogger(TorWrapper.class.getName());
 
 	/**
-	 * Starts the Tor process, but does not yet connect to the Tor Network.
+	 * Starts the Tor process, but does not yet connect to the Tor network.
 	 * Call {@link #enableNetwork(boolean)} for this.
 	 * <p>
-	 * This method must only be called once. To restart the Tor process, stop
-	 * this wrapper instance and then create a new instance.
+	 * This method waits for the Tor process to start before returning. Methods
+	 * that modify the wrapper's configuration
+	 * ({@link #publishHiddenService(int, int, String)},
+	 * {@link #removeHiddenService(String)}, {@link #enableNetwork(boolean)},
+	 * {@link #enableBridges(List)}, {@link #enableConnectionPadding(boolean)},
+	 * {@link #enableIpv6(boolean)}) should be called after this method returns.
+	 * <p>
+	 * Do not call this method concurrently with {@link #stop()}.
+	 * <p>
+	 * If this method throws an exception, call {@link #stop()} before trying
+	 * to call this method again.
 	 */
 	void start() throws IOException, InterruptedException;
 
 	/**
-	 * Tell the Tor process to stop and returns without waiting for the
-	 * process to exit.
+	 * Tell the Tor process to stop and waits for it to stop before returning.
+	 * <p>
+	 * The wrapper's configuration is reset, so if the wrapper is reused by
+	 * calling {@link #start()} again then any configuration applied via
+	 * {@link #enableNetwork(boolean)} etc must be applied again.
+	 * <p>
+	 * Do not call this method concurrently with {@link #start()}.
 	 */
-	void stop() throws IOException;
+	void stop() throws IOException, InterruptedException;
 
 	/**
 	 * Sets an observer for observing the state of the wrapper, replacing any
@@ -111,9 +125,26 @@ public interface TorWrapper {
 	enum TorState {
 
 		/**
-		 * The Tor process is either starting or stopping.
+		 * The wrapper has been created but the {@link #start()} method has not
+		 * yet been called. This is the initial state.
 		 */
-		STARTING_STOPPING,
+		NOT_STARTED,
+
+		/**
+		 * The {@link #start()} method has been called and the Tor process is
+		 * starting.
+		 */
+		STARTING,
+
+		/**
+		 * The {@link #start()} method has been called and the Tor process has
+		 * started.
+		 * <p>
+		 * No connections to the Tor network will be made in this state. The
+		 * wrapper remains in this state until {@link #enableNetwork(boolean)}
+		 * is called.
+		 */
+		STARTED,
 
 		/**
 		 * The Tor process has started, its network connection is enabled, and
@@ -131,7 +162,22 @@ public interface TorWrapper {
 		/**
 		 * The Tor process has started but its network connection is disabled.
 		 */
-		DISABLED
+		DISABLED,
+
+		/**
+		 * The {@link #stop()} method has been called and the Tor process is
+		 * stopping.
+		 */
+		STOPPING,
+
+		/**
+		 * The {@link #stop()} method has been called and the Tor process has
+		 * stopped.
+		 * <p>
+		 * A new Tor process can be started by calling the {@link #start()}
+		 * method again.
+		 */
+		STOPPED
 	}
 
 	/**

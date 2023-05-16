@@ -18,6 +18,9 @@ import static org.briarproject.onionwrapper.TestUtils.getTestDirectory;
 import static org.briarproject.onionwrapper.TestUtils.isLinux;
 import static org.briarproject.onionwrapper.TestUtils.isWindows;
 import static org.briarproject.onionwrapper.TorWrapper.TorState.CONNECTED;
+import static org.briarproject.onionwrapper.TorWrapper.TorState.STARTED;
+import static org.briarproject.onionwrapper.TorWrapper.TorState.STOPPED;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeNotNull;
 import static org.junit.Assume.assumeTrue;
@@ -28,7 +31,7 @@ public class BootstrapTest extends BaseTest {
 
 	private static final int SOCKS_PORT = 59060;
 	private static final int CONTROL_PORT = 59061;
-	private final static long TIMEOUT = MINUTES.toMillis(2);
+	private final static long TIMEOUT = MINUTES.toMillis(5);
 
 	private final ExecutorService executor = newCachedThreadPool();
 	private final File torDir = getTestDirectory();
@@ -59,9 +62,16 @@ public class BootstrapTest extends BaseTest {
 			throw new AssertionError("Running on unsupported OS");
 		}
 
+		// Bootstrap twice with the same wrapper to test wrapper reuse
+		testBootstrapping(tor);
+		testBootstrapping(tor);
+	}
+
+	private void testBootstrapping(TorWrapper tor) throws Exception {
 		boolean connected;
 		try {
 			tor.start();
+			assertEquals(STARTED, tor.getTorState());
 			tor.enableNetwork(true);
 			long start = System.currentTimeMillis();
 			while (System.currentTimeMillis() - start < TIMEOUT) {
@@ -74,6 +84,7 @@ public class BootstrapTest extends BaseTest {
 			else LOG.warning("Could not connect to Tor within timeout");
 		} finally {
 			tor.stop();
+			assertEquals(STOPPED, tor.getTorState());
 		}
 		assertTrue(connected);
 	}

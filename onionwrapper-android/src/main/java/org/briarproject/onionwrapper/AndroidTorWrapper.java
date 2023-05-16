@@ -5,7 +5,6 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.res.Resources;
-import android.os.Build;
 
 import org.briarproject.android.dontkillmelib.wakelock.AndroidWakeLock;
 import org.briarproject.android.dontkillmelib.wakelock.AndroidWakeLockManager;
@@ -24,6 +23,9 @@ import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+import static android.os.Build.CPU_ABI;
+import static android.os.Build.CPU_ABI2;
+import static android.os.Build.SUPPORTED_ABIS;
 import static android.os.Build.VERSION.SDK_INT;
 import static java.util.Arrays.asList;
 import static java.util.logging.Level.INFO;
@@ -42,8 +44,7 @@ public class AndroidTorWrapper extends AbstractTorWrapper {
 	private static final String OBFS4_LIB_NAME = "libobfs4proxy.so";
 	private static final String SNOWFLAKE_LIB_NAME = "libsnowflake.so";
 
-	private static final Logger LOG =
-			getLogger(AndroidTorWrapper.class.getName());
+	private static final Logger LOG = getLogger(AndroidTorWrapper.class.getName());
 
 	private final Application app;
 	private final AndroidWakeLock wakeLock;
@@ -74,8 +75,7 @@ public class AndroidTorWrapper extends AbstractTorWrapper {
 			File torDirectory,
 			int torSocksPort,
 			int torControlPort) {
-		super(ioExecutor, eventExecutor, architecture, torDirectory,
-				torSocksPort, torControlPort);
+		super(ioExecutor, eventExecutor, architecture, torDirectory, torSocksPort, torControlPort);
 		this.app = app;
 		wakeLock = wakeLockManager.createWakeLock("TorPlugin");
 		String nativeLibDir = app.getApplicationInfo().nativeLibraryDir;
@@ -119,7 +119,7 @@ public class AndroidTorWrapper extends AbstractTorWrapper {
 	}
 
 	@Override
-	public void stop() throws IOException {
+	public void stop() throws IOException, InterruptedException {
 		try {
 			super.stop();
 		} finally {
@@ -139,8 +139,7 @@ public class AndroidTorWrapper extends AbstractTorWrapper {
 
 	@Override
 	protected File getSnowflakeExecutableFile() {
-		return snowflakeLib.exists() ? snowflakeLib
-				: super.getSnowflakeExecutableFile();
+		return snowflakeLib.exists() ? snowflakeLib : super.getSnowflakeExecutableFile();
 	}
 
 	@Override
@@ -150,18 +149,15 @@ public class AndroidTorWrapper extends AbstractTorWrapper {
 
 	@Override
 	protected void installObfs4Executable() throws IOException {
-		installExecutable(super.getObfs4ExecutableFile(), obfs4Lib,
-				OBFS4_LIB_NAME);
+		installExecutable(super.getObfs4ExecutableFile(), obfs4Lib, OBFS4_LIB_NAME);
 	}
 
 	@Override
 	protected void installSnowflakeExecutable() throws IOException {
-		installExecutable(super.getSnowflakeExecutableFile(), snowflakeLib,
-				SNOWFLAKE_LIB_NAME);
+		installExecutable(super.getSnowflakeExecutableFile(), snowflakeLib, SNOWFLAKE_LIB_NAME);
 	}
 
-	private void installExecutable(File extracted, File lib, String libName)
-			throws IOException {
+	private void installExecutable(File extracted, File lib, String libName) throws IOException {
 		if (lib.exists()) {
 			// If an older version left behind a binary, delete it
 			if (extracted.exists()) {
@@ -177,8 +173,7 @@ public class AndroidTorWrapper extends AbstractTorWrapper {
 		}
 	}
 
-	private void extractLibraryFromApk(String libName, File dest)
-			throws IOException {
+	private void extractLibraryFromApk(String libName, File dest) throws IOException {
 		File sourceDir = new File(app.getApplicationInfo().sourceDir);
 		if (sourceDir.isFile()) {
 			// Look for other APK files in the same directory, if we're allowed
@@ -189,12 +184,10 @@ public class AndroidTorWrapper extends AbstractTorWrapper {
 		for (File apk : findApkFiles(sourceDir)) {
 			@SuppressWarnings("IOStreamConstructor")
 			ZipInputStream zin = new ZipInputStream(new FileInputStream(apk));
-			for (ZipEntry e = zin.getNextEntry(); e != null;
-			     e = zin.getNextEntry()) {
+			for (ZipEntry e = zin.getNextEntry(); e != null; e = zin.getNextEntry()) {
 				if (libPaths.contains(e.getName())) {
 					if (LOG.isLoggable(INFO)) {
-						LOG.info("Extracting " + e.getName()
-								+ " from " + apk.getAbsolutePath());
+						LOG.info("Extracting " + e.getName() + " from " + apk.getAbsolutePath());
 					}
 					extract(zin, dest); // Zip input stream will be closed
 					return;
@@ -243,10 +236,10 @@ public class AndroidTorWrapper extends AbstractTorWrapper {
 	private Collection<String> getSupportedArchitectures() {
 		List<String> abis = new ArrayList<>();
 		if (SDK_INT >= 21) {
-			abis.addAll(asList(Build.SUPPORTED_ABIS));
+			abis.addAll(asList(SUPPORTED_ABIS));
 		} else {
-			abis.add(Build.CPU_ABI);
-			if (Build.CPU_ABI2 != null) abis.add(Build.CPU_ABI2);
+			abis.add(CPU_ABI);
+			if (CPU_ABI2 != null) abis.add(CPU_ABI2);
 		}
 		return abis;
 	}
