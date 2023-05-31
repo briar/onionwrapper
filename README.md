@@ -9,6 +9,20 @@ Binaries for Tor and pluggable transports are not included. They can be found in
 Maven artifacts: `org.briarproject:{tor,obfs4proxy,snowflake}-{android,linux,windows}`. The
 `obfs4proxy` artifact provides `obfs4` and `meek_lite`.
 
+If your app is uploaded to Google Play as an app bundle (AAB), you must include the following in
+ `build.gradle` to ensure that the Tor and pluggable transport binaries are extracted during
+ installation:
+
+```
+android {
+    packagingOptions {
+        jniLibs {
+            useLegacyPackaging = true
+        }
+    }
+}
+```
+
 On Android, the library uses
 [dont-kill-me-lib](https://code.briarproject.org/briar/dont-kill-me-lib) to hold a wake lock
 whenever Tor's network connection is enabled. The helper classes in `dont-kill-me-lib` can be used
