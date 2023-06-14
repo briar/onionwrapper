@@ -72,8 +72,9 @@ abstract class AbstractTorWrapper implements EventHandler, TorWrapper {
 
 	protected final Executor ioExecutor;
 	protected final Executor eventExecutor;
-	private final String architecture;
-	private final File torDirectory, configFile, doneFile, cookieFile;
+	protected final String architecture;
+	protected final File torDirectory;
+	private final File configFile, doneFile, cookieFile;
 	private final int torSocksPort;
 	private final int torControlPort;
 
@@ -243,7 +244,7 @@ abstract class AbstractTorWrapper implements EventHandler, TorWrapper {
 		if (!snowflakeFile.setExecutable(true, true)) throw new IOException();
 	}
 
-	private InputStream getExecutableInputStream(String basename) {
+	protected InputStream getExecutableInputStream(String basename) {
 		String ext = getExecutableExtension();
 		return requireNonNull(getResourceInputStream(architecture + "/" + basename, ext));
 	}

@@ -3,7 +3,7 @@ package org.briarproject.onionwrapper;
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.briarproject.onionwrapper.TestUtils.isWindows;
+import static org.briarproject.onionwrapper.util.OsUtils.isWindows;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assume.assumeTrue;
 

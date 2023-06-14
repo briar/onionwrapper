@@ -46,7 +46,7 @@ public class UnixTorWrapper extends JavaTorWrapper {
 
 	private interface CLibrary extends Library {
 
-		CLibrary INSTANCE = Native.loadLibrary("c", CLibrary.class);
+		CLibrary INSTANCE = Native.load("c", CLibrary.class);
 
 		int getpid();
 	}
