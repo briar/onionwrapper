@@ -50,7 +50,6 @@ import static org.briarproject.onionwrapper.TorWrapper.TorState.STARTED;
 import static org.briarproject.onionwrapper.TorWrapper.TorState.STARTING;
 import static org.briarproject.onionwrapper.TorWrapper.TorState.STOPPED;
 import static org.briarproject.onionwrapper.TorWrapper.TorState.STOPPING;
-import static org.briarproject.onionwrapper.util.OsUtils.isMac;
 
 @InterfaceNotNullByDefault
 abstract class AbstractTorWrapper implements EventHandler, TorWrapper {
@@ -73,8 +72,9 @@ abstract class AbstractTorWrapper implements EventHandler, TorWrapper {
 
 	protected final Executor ioExecutor;
 	protected final Executor eventExecutor;
-	private final String architecture;
-	private final File torDirectory, configFile, doneFile, cookieFile;
+	protected final String architecture;
+	protected final File torDirectory;
+	private final File configFile, doneFile, cookieFile;
 	private final int torSocksPort;
 	private final int torControlPort;
 
@@ -109,10 +109,6 @@ abstract class AbstractTorWrapper implements EventHandler, TorWrapper {
 
 	protected File getTorExecutableFile() {
 		return new File(torDirectory, "tor");
-	}
-
-	protected File getLibEventFile() {
-		return new File(torDirectory, "libevent-2.1.7.dylib");
 	}
 
 	@Override
@@ -207,9 +203,6 @@ abstract class AbstractTorWrapper implements EventHandler, TorWrapper {
 		//noinspection ResultOfMethodCallIgnored
 		doneFile.delete();
 		installTorExecutable();
-		if (isMac()) {
-			installLibEvent();
-		}
 		installObfs4Executable();
 		installSnowflakeExecutable();
 		extract(getConfigInputStream(), configFile);
@@ -229,22 +222,8 @@ abstract class AbstractTorWrapper implements EventHandler, TorWrapper {
 			LOG.info("Installing Tor binary for " + architecture);
 		}
 		File torFile = getTorExecutableFile();
-		// Important: delete file here and with other binaries below to prevent
-		// problems on macOS in case the file signature changed.
-		//noinspection ResultOfMethodCallIgnored
-		torFile.delete();
 		extract(getExecutableInputStream("tor"), torFile);
 		if (!torFile.setExecutable(true, true)) throw new IOException();
-	}
-
-	protected void installLibEvent() throws IOException {
-		if (LOG.isLoggable(INFO)) {
-			LOG.info("Installing libevent binary for " + architecture);
-		}
-		File libEventFile = getLibEventFile();
-		//noinspection ResultOfMethodCallIgnored
-		libEventFile.delete();
-		extract(getExecutableInputStream("libevent-2.1.7.dylib"), libEventFile);
 	}
 
 	protected void installObfs4Executable() throws IOException {
@@ -252,8 +231,6 @@ abstract class AbstractTorWrapper implements EventHandler, TorWrapper {
 			LOG.info("Installing obfs4proxy binary for " + architecture);
 		}
 		File obfs4File = getObfs4ExecutableFile();
-		//noinspection ResultOfMethodCallIgnored
-		obfs4File.delete();
 		extract(getExecutableInputStream("obfs4proxy"), obfs4File);
 		if (!obfs4File.setExecutable(true, true)) throw new IOException();
 	}
@@ -263,13 +240,11 @@ abstract class AbstractTorWrapper implements EventHandler, TorWrapper {
 			LOG.info("Installing snowflake binary for " + architecture);
 		}
 		File snowflakeFile = getSnowflakeExecutableFile();
-		//noinspection ResultOfMethodCallIgnored
-		snowflakeFile.delete();
 		extract(getExecutableInputStream("snowflake"), snowflakeFile);
 		if (!snowflakeFile.setExecutable(true, true)) throw new IOException();
 	}
 
-	private InputStream getExecutableInputStream(String basename) {
+	protected InputStream getExecutableInputStream(String basename) {
 		String ext = getExecutableExtension();
 		return requireNonNull(getResourceInputStream(architecture + "/" + basename, ext));
 	}

@@ -60,11 +60,13 @@ public class TestUtils {
 	public static String getArchitectureForTorBinary() {
 		String arch = System.getProperty("os.arch");
 		if (arch == null) return null;
-		if (isLinux() || isWindows()) {
+		if (isLinux()) {
 			//noinspection IfCanBeSwitch
 			if (arch.equals("amd64")) return "x86_64";
 			else if (arch.equals("aarch64")) return "aarch64";
 			else if (arch.equals("arm")) return "armhf";
+		} else if (isWindows()) {
+			if (arch.equals("amd64")) return "x86_64";
 		} else if (isMac()) {
 			if (arch.equals("amd64")) return "x86_64";
 			else if (arch.equals("aarch64")) return "aarch64";

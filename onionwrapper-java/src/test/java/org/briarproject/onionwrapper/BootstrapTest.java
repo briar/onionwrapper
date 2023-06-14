@@ -53,8 +53,11 @@ public class BootstrapTest extends BaseTest {
 	public void testBootstrapping() throws Exception {
 		String architecture = requireNonNull(getArchitectureForTorBinary());
 		TorWrapper tor;
-		if (isLinux() || isMac()) {
+		if (isLinux()) {
 			tor = new UnixTorWrapper(executor, executor, architecture, torDir,
+					CONTROL_PORT, SOCKS_PORT);
+		} else if (isMac()) {
+			tor = new MacTorWrapper(executor, executor, architecture, torDir,
 					CONTROL_PORT, SOCKS_PORT);
 		} else if (isWindows()) {
 			tor = new WindowsTorWrapper(executor, executor, architecture, torDir,

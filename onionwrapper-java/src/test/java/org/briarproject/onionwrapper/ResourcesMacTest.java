@@ -3,6 +3,7 @@ package org.briarproject.onionwrapper;
 import org.junit.Before;
 import org.junit.Test;
 
+import static org.briarproject.onionwrapper.MacTorWrapper.LIB_EVENT_VERSION;
 import static org.briarproject.onionwrapper.util.OsUtils.isMac;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assume.assumeTrue;
@@ -21,7 +22,7 @@ public class ResourcesMacTest {
 
 	@Test
 	public void testCanLoadLibEvent() {
-		testCanLoadResource("x86_64/libevent-2.1.7.dylib");
+		testCanLoadResource("x86_64/libevent-" + LIB_EVENT_VERSION + ".dylib");
 	}
 
 	@Test
