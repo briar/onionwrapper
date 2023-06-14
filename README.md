@@ -9,6 +9,8 @@ Binaries for Tor and pluggable transports are not included. They can be found in
 Maven artifacts: `org.briarproject:{tor,obfs4proxy,snowflake}-{android,linux,macos,windows}`. The
 `obfs4proxy` artifact provides `obfs4` and `meek_lite`.
 
+The macOS binaries are not signed, so you will need to sign them when packaging your app.
+
 If your Android app is uploaded to Google Play as an app bundle (AAB), you must include the following in
  `build.gradle` to ensure that the Tor and pluggable transport binaries are extracted during
  installation:
