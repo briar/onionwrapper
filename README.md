@@ -1,15 +1,15 @@
 ## Onion Wrapper
 
-A Java library providing a wrapper for running a Tor client on Android, Unix and Windows. The
+A Java library providing a wrapper for running a Tor client on Android, Linux, macOS and Windows. The
 wrapper can be used for running hidden services.
 
 The library supports the `obfs4`, `meek_lite` and `snowflake` pluggable transports.
 
 Binaries for Tor and pluggable transports are not included. They can be found in the following
-Maven artifacts: `org.briarproject:{tor,obfs4proxy,snowflake}-{android,linux,windows}`. The
+Maven artifacts: `org.briarproject:{tor,obfs4proxy,snowflake}-{android,linux,macos,windows}`. The
 `obfs4proxy` artifact provides `obfs4` and `meek_lite`.
 
-If your app is uploaded to Google Play as an app bundle (AAB), you must include the following in
+If your Android app is uploaded to Google Play as an app bundle (AAB), you must include the following in
  `build.gradle` to ensure that the Tor and pluggable transport binaries are extracted during
  installation:
 
