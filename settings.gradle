@@ -10,7 +10,6 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
-        maven { url "https://mvntmp.mobanisto.de" }
     }
 }
 rootProject.name = "Onion Wrapper"
