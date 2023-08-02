@@ -127,69 +127,85 @@ abstract class AbstractTorWrapper implements EventHandler, TorWrapper {
 
 	@Override
 	public void start() throws IOException, InterruptedException {
-		state.setStarting();
-		if (!torDirectory.exists()) {
-			if (!torDirectory.mkdirs()) {
-				throw new IOException("Could not create Tor directory");
-			}
-		}
-		// Install or update the assets if necessary
-		if (!assetsAreUpToDate()) installAssets();
-		// Start from the default config every time
-		extract(getConfigInputStream(), configFile);
-		if (cookieFile.exists() && !cookieFile.delete()) {
-			LOG.warning("Old auth cookie not deleted");
-		}
-		// Start a new Tor process
-		LOG.info("Starting Tor");
-		File torFile = getTorExecutableFile();
-		String torPath = torFile.getAbsolutePath();
-		String configPath = configFile.getAbsolutePath();
-		String pid = String.valueOf(getProcessId());
-		ProcessBuilder pb = new ProcessBuilder(torPath, "-f", configPath, OWNER, pid);
-		Map<String, String> env = pb.environment();
-		env.put("HOME", torDirectory.getAbsolutePath());
-		pb.directory(torDirectory);
-		pb.redirectErrorStream(true);
+		if (!state.setStarting()) return; // Not in the appropriate state
 		try {
-			torProcess = pb.start();
-		} catch (SecurityException e) {
-			throw new IOException(e);
-		}
-		// Wait for the Tor process to start
-		waitForTorToStart(requireNonNull(torProcess));
-		// Wait for the auth cookie file to be created/updated
-		long start = System.currentTimeMillis();
-		while (cookieFile.length() < 32) {
-			if (System.currentTimeMillis() - start > COOKIE_TIMEOUT_MS) {
-				throw new IOException("Auth cookie not created");
+			if (!torDirectory.exists()) {
+				if (!torDirectory.mkdirs()) {
+					throw new IOException("Could not create Tor directory");
+				}
 			}
-			//noinspection BusyWait
-			Thread.sleep(COOKIE_POLLING_INTERVAL_MS);
-		}
-		LOG.info("Auth cookie created");
-		// Open a control connection and authenticate using the cookie file
-		controlSocket = new Socket("127.0.0.1", torControlPort);
-		controlConnection = new TorControlConnection(controlSocket);
-		controlConnection.authenticate(read(cookieFile));
-		// Tell Tor to exit when the control connection is closed
-		controlConnection.takeOwnership();
-		controlConnection.resetConf(singletonList(OWNER));
-		// Register to receive events from the Tor process
-		controlConnection.setEventHandler(this);
-		controlConnection.setEvents(asList(EVENTS));
-		// Check whether Tor has already bootstrapped
-		String info = controlConnection.getInfo("status/bootstrap-phase");
-		if (info != null && info.contains("PROGRESS=")) {
-			int percentage = parseBootstrapPercentage(info);
-			if (percentage == 100) LOG.info("Tor has already bootstrapped");
-			state.setBootstrapPercentage(percentage);
-		}
-		// Check whether Tor has already built a circuit
-		info = controlConnection.getInfo("status/circuit-established");
-		if ("1".equals(info)) {
-			LOG.info("Tor has already built a circuit");
-			state.setCircuitBuilt(true);
+			// Install or update the assets if necessary
+			if (!assetsAreUpToDate()) installAssets();
+			// Start from the default config every time
+			extract(getConfigInputStream(), configFile);
+			if (cookieFile.exists() && !cookieFile.delete()) {
+				LOG.warning("Old auth cookie not deleted");
+			}
+			// Start a new Tor process
+			LOG.info("Starting Tor");
+			File torFile = getTorExecutableFile();
+			String torPath = torFile.getAbsolutePath();
+			String configPath = configFile.getAbsolutePath();
+			String pid = String.valueOf(getProcessId());
+			ProcessBuilder pb = new ProcessBuilder(torPath, "-f", configPath, OWNER, pid);
+			Map<String, String> env = pb.environment();
+			env.put("HOME", torDirectory.getAbsolutePath());
+			pb.directory(torDirectory);
+			pb.redirectErrorStream(true);
+			try {
+				torProcess = pb.start();
+			} catch (SecurityException e) {
+				throw new IOException(e);
+			}
+			// Wait for the Tor process to start
+			waitForTorToStart(requireNonNull(torProcess));
+			// Wait for the auth cookie file to be created/updated
+			long start = System.currentTimeMillis();
+			while (cookieFile.length() < 32) {
+				if (System.currentTimeMillis() - start > COOKIE_TIMEOUT_MS) {
+					throw new IOException("Auth cookie not created");
+				}
+				//noinspection BusyWait
+				Thread.sleep(COOKIE_POLLING_INTERVAL_MS);
+			}
+			LOG.info("Auth cookie created");
+			// Open a control connection and authenticate using the cookie file
+			controlSocket = new Socket("127.0.0.1", torControlPort);
+			controlConnection = new TorControlConnection(controlSocket);
+			controlConnection.authenticate(read(cookieFile));
+			// Tell Tor to exit when the control connection is closed
+			controlConnection.takeOwnership();
+			controlConnection.resetConf(singletonList(OWNER));
+			// Register to receive events from the Tor process
+			controlConnection.setEventHandler(this);
+			controlConnection.setEvents(asList(EVENTS));
+			// Check whether Tor has already bootstrapped
+			String info = controlConnection.getInfo("status/bootstrap-phase");
+			if (info != null && info.contains("PROGRESS=")) {
+				int percentage = parseBootstrapPercentage(info);
+				if (percentage == 100) LOG.info("Tor has already bootstrapped");
+				state.setBootstrapPercentage(percentage);
+			}
+			// Check whether Tor has already built a circuit
+			info = controlConnection.getInfo("status/circuit-established");
+			if ("1".equals(info)) {
+				LOG.info("Tor has already built a circuit");
+				state.setCircuitBuilt(true);
+			}
+		} catch (IOException e) {
+			// Clean up
+			if (controlSocket != null) {
+				tryToClose(controlSocket, LOG, WARNING);
+				controlSocket = null;
+				controlConnection = null;
+			}
+			if (torProcess != null) {
+				torProcess.destroy();
+				torProcess.waitFor();
+				torProcess = null;
+			}
+			state.setStartupFailed();
+			throw e;
 		}
 		state.setStarted();
 	}
@@ -383,7 +399,7 @@ abstract class AbstractTorWrapper implements EventHandler, TorWrapper {
 
 	@Override
 	public void stop() throws IOException, InterruptedException {
-		state.setStopping();
+		if (!state.setStopping()) return; // Not in the appropriate state
 		try {
 			if (controlConnection != null) {
 				controlConnection.shutdownTor("TERM");
@@ -616,39 +632,69 @@ abstract class AbstractTorWrapper implements EventHandler, TorWrapper {
 			}
 		}
 
-		private synchronized void setStarting() {
-			// It's legal to call start() if the wrapper has never been started, or has been
-			// started and then stopped
+		/**
+		 * If the current process state is {@link ProcessState#NOT_STARTED NOT_STARTED} or
+		 * {@link ProcessState#STOPPED STOPPED}, sets the process state to
+		 * {@link ProcessState#STARTING STARTING} and returns true. Otherwise returns false.
+		 */
+		private synchronized boolean setStarting() {
+			// It's appropriate to call start() if the wrapper has never been started,
+			// or has been started and then stopped
 			if (processState != ProcessState.NOT_STARTED && processState != ProcessState.STOPPED) {
-				throw new IllegalStateException();
+				return false;
 			}
 			processState = ProcessState.STARTING;
 			updateState();
+			return true;
 		}
 
 		private synchronized void setStarted() {
-			// It's illegal to call start() and stop() concurrently
+			// We should always be in the STARTING state when this is called
 			if (processState != ProcessState.STARTING) throw new IllegalStateException();
 			processState = ProcessState.STARTED;
 			updateState();
 		}
 
+		private synchronized void setStartupFailed() {
+			// We should always be in the STARTING state when this is called
+			if (processState != ProcessState.STARTING) throw new IllegalStateException();
+			processState = ProcessState.STOPPED;
+			// Reset all state related to the failed attempt
+			networkInitialised = false;
+			networkEnabled = false;
+			paddingEnabled = false;
+			ipv6Enabled = false;
+			circuitBuilt = false;
+			bootstrapPercentage = 0;
+			bridges = emptyList();
+			orConnectionsConnected = 0;
+			updateState();
+		}
+
+		/**
+		 * Returns true if the current process state is {@link ProcessState#STARTED STARTED}.
+		 */
 		@SuppressWarnings("BooleanMethodIsAlwaysInverted")
 		private synchronized boolean isTorRunning() {
 			return processState == ProcessState.STARTED;
 		}
 
-		private synchronized void setStopping() {
-			// It's legal to call stop() if start() has returned or thrown an exception
-			if (processState != ProcessState.STARTING && processState != ProcessState.STARTED) {
-				throw new IllegalStateException();
-			}
+		/**
+		 * If the current process state is {@link ProcessState#STARTING STARTING} or
+		 * {@link ProcessState#STARTED STARTED}, changes the process state to
+		 * {@link ProcessState#STOPPING STOPPING} and returns true. Otherwise returns false.
+		 */
+		private synchronized boolean setStopping() {
+			// It's appropriate to call stop() if start() has returned without throwing
+			// an exception
+			if (processState != ProcessState.STARTED) return false;
 			processState = ProcessState.STOPPING;
 			updateState();
+			return true;
 		}
 
 		private synchronized void setStopped() {
-			// It's illegal to call start() and stop() concurrently
+			// We should always be in the STOPPING state when this is called
 			if (processState != ProcessState.STOPPING) throw new IllegalStateException();
 			processState = ProcessState.STOPPED;
 			// Reset all state related to the process that has stopped

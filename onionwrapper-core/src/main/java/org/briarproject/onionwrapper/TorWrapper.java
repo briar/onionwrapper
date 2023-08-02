@@ -28,9 +28,6 @@ public interface TorWrapper {
 	 * {@link #enableIpv6(boolean)}) should be called after this method returns.
 	 * <p>
 	 * Do not call this method concurrently with {@link #stop()}.
-	 * <p>
-	 * If this method throws an exception, call {@link #stop()} before trying
-	 * to call this method again.
 	 */
 	void start() throws IOException, InterruptedException;
 
