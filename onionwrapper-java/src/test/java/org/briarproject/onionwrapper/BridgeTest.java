@@ -44,7 +44,7 @@ public class BridgeTest extends BaseTest {
 
 	private final static Logger LOG = getLogger(BridgeTest.class.getName());
 
-	private static final String[] SNOWFLAKE_COUNTRY_CODES = {"TM", "ZZ"};
+	private static final String[] SNOWFLAKE_COUNTRY_CODES = {"IR", "TM", "ZZ"};
 	private static final int SOCKS_PORT = 59060;
 	private static final int CONTROL_PORT = 59061;
 	private final static long TIMEOUT = MINUTES.toMillis(2);
