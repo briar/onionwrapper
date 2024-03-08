@@ -40,6 +40,15 @@ class CircumventionProviderImpl implements CircumventionProvider {
 	}
 
 	@Override
+	public boolean shouldUseBridges(String countryCode) {
+		return USE_DEFAULT_OBFS4.contains(countryCode) ||
+				USE_NON_DEFAULT_OBFS4.contains(countryCode) ||
+				USE_VANILLA.contains(countryCode) ||
+				USE_MEEK.contains(countryCode) ||
+				USE_SNOWFLAKE.contains(countryCode);
+	}
+
+	@Override
 	public List<BridgeType> getSuitableBridgeTypes(String countryCode) {
 		List<BridgeType> types = new ArrayList<>();
 		if (USE_DEFAULT_OBFS4.contains(countryCode)) types.add(DEFAULT_OBFS4);
@@ -53,12 +62,6 @@ class CircumventionProviderImpl implements CircumventionProvider {
 			types.add(VANILLA);
 		}
 		return types;
-	}
-
-	@Override
-	public List<String> getBridges(BridgeType type, String countryCode, boolean letsEncrypt) {
-		// The `letsEncrypt` parameter is ignored, as no domain-fronted bridges use Let's Encrypt
-		return getBridges(type, countryCode);
 	}
 
 	@Override

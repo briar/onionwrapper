@@ -51,22 +51,16 @@ public interface CircumventionProvider {
 	String[] COUNTRIES_SNOWFLAKE = {"BY", "CN", "EG", "HK", "IR", "RU", "TM"};
 
 	/**
+	 * Returns true if bridges should be used by default in the given country.
+	 */
+	boolean shouldUseBridges(String countryCode);
+
+	/**
 	 * Returns the types of bridge connection that are suitable for the given country, or
 	 * {@link BridgeType#DEFAULT_OBFS4} and {@link BridgeType#VANILLA} if we don't have any
 	 * specific recommendations for the given country.
 	 */
 	List<BridgeType> getSuitableBridgeTypes(String countryCode);
-
-	/**
-	 * Returns bridges of the given type that are usable in the given country.
-	 *
-	 * @param letsEncrypt Specifies whether the client is able to verify Let's Encrypt TLS
-	 * 		certificates signed with the IdentTrust DST Root X3 certificate. Versions of Android
-	 * 		older than 7.1 consider the certificate to have expired at the end of September 2021.
-	 * 		This parameter is currently ignored, as no domain-fronted bridges use Let's Encrypt
-	 * 		certificates.
-	 */
-	List<String> getBridges(BridgeType type, String countryCode, boolean letsEncrypt);
 
 	/**
 	 * Returns bridges of the given type that are usable in the given country.
