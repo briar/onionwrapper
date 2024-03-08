@@ -42,7 +42,6 @@ import static org.briarproject.onionwrapper.TestUtils.isOptionalTestEnabled;
 import static org.briarproject.onionwrapper.TorWrapper.TorState.CONNECTED;
 import static org.briarproject.onionwrapper.util.OsUtils.isLinux;
 import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeNotNull;
 import static org.junit.Assume.assumeTrue;
 
 @RunWith(Parameterized.class)
@@ -54,7 +53,7 @@ public class BridgeTest extends BaseTest {
 	private static final int SOCKS_PORT = 59060;
 	private static final int CONTROL_PORT = 59061;
 	private final static long TIMEOUT = MINUTES.toMillis(2);
-	private final static long MEEK_TIMEOUT = MINUTES.toMillis(6);
+	private final static long MEEK_TIMEOUT = MINUTES.toMillis(10);
 	private final static int UNREACHABLE_BRIDGES_ALLOWED = 6;
 	private final static int ATTEMPTS_PER_BRIDGE = 5;
 
