@@ -61,11 +61,11 @@ public class BridgeTest extends BaseTest {
 	public static Iterable<Params> data() {
 		// Share stats among all the test instances
 		Stats stats = new Stats();
-		// Test all the unique bridge lines
-		Set<String> bridges = new TreeSet<>();
 		CircumventionProvider provider = new CircumventionProviderImpl();
 		List<Params> states = new ArrayList<>();
 		for (int i = 0; i < ATTEMPTS_PER_BRIDGE; i++) {
+			// Test all the unique bridge lines
+			Set<String> bridges = new HashSet<>();
 			for (BridgeType type : BridgeType.values()) {
 				for (String bridge : provider.getBridges(type, "ZZ")) {
 					if (bridges.add(bridge)) states.add(new Params(bridge, type, stats));
