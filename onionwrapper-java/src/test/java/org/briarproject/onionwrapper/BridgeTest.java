@@ -42,6 +42,7 @@ import static org.briarproject.onionwrapper.TestUtils.isOptionalTestEnabled;
 import static org.briarproject.onionwrapper.TorWrapper.TorState.CONNECTED;
 import static org.briarproject.onionwrapper.util.OsUtils.isLinux;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeNotNull;
 import static org.junit.Assume.assumeTrue;
 
 @RunWith(Parameterized.class)
