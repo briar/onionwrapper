@@ -19,6 +19,7 @@ import java.util.logging.Logger;
 
 import javax.annotation.concurrent.GuardedBy;
 
+import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static java.util.concurrent.Executors.newCachedThreadPool;
 import static java.util.concurrent.TimeUnit.MINUTES;
@@ -29,6 +30,10 @@ import static org.briarproject.onionwrapper.CircumventionProvider.BridgeType.MEE
 import static org.briarproject.onionwrapper.CircumventionProvider.BridgeType.NON_DEFAULT_OBFS4;
 import static org.briarproject.onionwrapper.CircumventionProvider.BridgeType.SNOWFLAKE;
 import static org.briarproject.onionwrapper.CircumventionProvider.BridgeType.VANILLA;
+import static org.briarproject.onionwrapper.CircumventionProvider.COUNTRIES_DEFAULT_BRIDGES;
+import static org.briarproject.onionwrapper.CircumventionProvider.COUNTRIES_MEEK_BRIDGES;
+import static org.briarproject.onionwrapper.CircumventionProvider.COUNTRIES_NON_DEFAULT_BRIDGES;
+import static org.briarproject.onionwrapper.CircumventionProvider.COUNTRIES_SNOWFLAKE_BRIDGES;
 import static org.briarproject.onionwrapper.TestUtils.deleteTestDirectory;
 import static org.briarproject.onionwrapper.TestUtils.getArchitectureForTorBinary;
 import static org.briarproject.onionwrapper.TestUtils.getTestDirectory;
@@ -44,7 +49,7 @@ public class BridgeTest extends BaseTest {
 
 	private final static Logger LOG = getLogger(BridgeTest.class.getName());
 
-	private static final String[] SNOWFLAKE_COUNTRY_CODES = {"IR", "TM", "ZZ"};
+	private static final List<BridgeType> ESSENTIAL_BRIDGE_TYPES = asList(MEEK, SNOWFLAKE);
 	private static final int SOCKS_PORT = 59060;
 	private static final int CONTROL_PORT = 59061;
 	private final static long TIMEOUT = MINUTES.toMillis(2);
@@ -56,27 +61,39 @@ public class BridgeTest extends BaseTest {
 	public static Iterable<Params> data() {
 		// Share stats among all the test instances
 		Stats stats = new Stats();
+		// Test all the unique bridge lines
+		Set<String> bridges = new TreeSet<>();
 		CircumventionProvider provider = new CircumventionProviderImpl();
 		List<Params> states = new ArrayList<>();
 		for (int i = 0; i < ATTEMPTS_PER_BRIDGE; i++) {
-			for (String bridge : provider.getBridges(DEFAULT_OBFS4, "", true)) {
-				states.add(new Params(bridge, DEFAULT_OBFS4, stats, false));
-			}
-			for (String bridge : provider.getBridges(NON_DEFAULT_OBFS4, "", true)) {
-				states.add(new Params(bridge, NON_DEFAULT_OBFS4, stats, false));
-			}
-			for (String bridge : provider.getBridges(VANILLA, "", true)) {
-				states.add(new Params(bridge, VANILLA, stats, false));
-			}
-			for (String bridge : provider.getBridges(MEEK, "", true)) {
-				states.add(new Params(bridge, MEEK, stats, true));
-			}
-			for (String countryCode : SNOWFLAKE_COUNTRY_CODES) {
-				for (String bridge : provider.getBridges(SNOWFLAKE, countryCode, true)) {
-					states.add(new Params(bridge, SNOWFLAKE, stats, true));
+			for (BridgeType type : BridgeType.values()) {
+				for (String bridge : provider.getBridges(type, "ZZ")) {
+					if (bridges.add(bridge)) states.add(new Params(bridge, type, stats));
 				}
-				for (String bridge : provider.getBridges(SNOWFLAKE, countryCode, false)) {
-					states.add(new Params(bridge, SNOWFLAKE, stats, true));
+			}
+			for (String countryCode : COUNTRIES_DEFAULT_BRIDGES) {
+				for (String bridge : provider.getBridges(DEFAULT_OBFS4, countryCode)) {
+					if (bridges.add(bridge)) states.add(new Params(bridge, DEFAULT_OBFS4, stats));
+				}
+			}
+			for (String countryCode : COUNTRIES_NON_DEFAULT_BRIDGES) {
+				for (String bridge : provider.getBridges(NON_DEFAULT_OBFS4, countryCode)) {
+					if (bridges.add(bridge)) {
+						states.add(new Params(bridge, NON_DEFAULT_OBFS4, stats));
+					}
+				}
+				for (String bridge : provider.getBridges(VANILLA, countryCode)) {
+					if (bridges.add(bridge)) states.add(new Params(bridge, VANILLA, stats));
+				}
+			}
+			for (String countryCode : COUNTRIES_MEEK_BRIDGES) {
+				for (String bridge : provider.getBridges(MEEK, countryCode)) {
+					if (bridges.add(bridge)) states.add(new Params(bridge, MEEK, stats));
+				}
+			}
+			for (String countryCode : COUNTRIES_SNOWFLAKE_BRIDGES) {
+				for (String bridge : provider.getBridges(SNOWFLAKE, countryCode)) {
+					if (bridges.add(bridge)) states.add(new Params(bridge, SNOWFLAKE, stats));
 				}
 			}
 		}
@@ -132,7 +149,7 @@ public class BridgeTest extends BaseTest {
 				params.stats.countSuccess(params.bridge);
 			} else {
 				LOG.warning("Could not connect to Tor within timeout: " + params.bridge);
-				params.stats.countFailure(params.bridge, params.essential);
+				params.stats.countFailure(params.bridge, params.bridgeType);
 			}
 		} finally {
 			tor.stop();
@@ -144,13 +161,11 @@ public class BridgeTest extends BaseTest {
 		private final String bridge;
 		private final BridgeType bridgeType;
 		private final Stats stats;
-		private final boolean essential;
 
-		private Params(String bridge, BridgeType bridgeType, Stats stats, boolean essential) {
+		private Params(String bridge, BridgeType bridgeType, Stats stats) {
 			this.bridge = bridge;
 			this.bridgeType = bridgeType;
 			this.stats = stats;
-			this.essential = essential;
 		}
 	}
 
@@ -171,7 +186,7 @@ public class BridgeTest extends BaseTest {
 			successes.add(bridge);
 		}
 
-		private synchronized void countFailure(String bridge, boolean essential) {
+		private synchronized void countFailure(String bridge, BridgeType bridgeType) {
 			if (failures.add(bridge) == ATTEMPTS_PER_BRIDGE) {
 				LOG.warning("Bridge is unreachable after "
 						+ ATTEMPTS_PER_BRIDGE + " attempts: " + bridge);
@@ -179,7 +194,7 @@ public class BridgeTest extends BaseTest {
 				if (unreachable.size() > UNREACHABLE_BRIDGES_ALLOWED) {
 					fail(unreachable.size() + " bridges are unreachable: " + unreachable);
 				}
-				if (essential) {
+				if (ESSENTIAL_BRIDGE_TYPES.contains(bridgeType)) {
 					fail("essential bridge is unreachable");
 				}
 			}

@@ -1,24 +1,18 @@
 package org.briarproject.onionwrapper;
 
+import org.briarproject.onionwrapper.CircumventionProvider.BridgeType;
 import org.junit.Test;
 
-import java.util.HashSet;
-import java.util.Set;
-
-import static java.util.Arrays.asList;
-import static org.briarproject.onionwrapper.CircumventionProvider.BLOCKED;
-import static org.briarproject.onionwrapper.CircumventionProvider.BRIDGES;
 import static org.briarproject.onionwrapper.CircumventionProvider.BridgeType.DEFAULT_OBFS4;
 import static org.briarproject.onionwrapper.CircumventionProvider.BridgeType.MEEK;
 import static org.briarproject.onionwrapper.CircumventionProvider.BridgeType.NON_DEFAULT_OBFS4;
 import static org.briarproject.onionwrapper.CircumventionProvider.BridgeType.SNOWFLAKE;
 import static org.briarproject.onionwrapper.CircumventionProvider.BridgeType.VANILLA;
-import static org.briarproject.onionwrapper.CircumventionProvider.DEFAULT_BRIDGES;
-import static org.briarproject.onionwrapper.CircumventionProvider.DPI_BRIDGES;
-import static org.briarproject.onionwrapper.CircumventionProvider.NON_DEFAULT_BRIDGES;
-import static org.junit.Assert.assertEquals;
+import static org.briarproject.onionwrapper.CircumventionProvider.COUNTRIES_DEFAULT_BRIDGES;
+import static org.briarproject.onionwrapper.CircumventionProvider.COUNTRIES_MEEK_BRIDGES;
+import static org.briarproject.onionwrapper.CircumventionProvider.COUNTRIES_NON_DEFAULT_BRIDGES;
+import static org.briarproject.onionwrapper.CircumventionProvider.COUNTRIES_SNOWFLAKE_BRIDGES;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
 public class CircumventionProviderImplTest extends BaseTest {
@@ -27,65 +21,35 @@ public class CircumventionProviderImplTest extends BaseTest {
 			new CircumventionProviderImpl();
 
 	@Test
-	public void testInvariants() {
-		Set<String> blocked = new HashSet<>(asList(BLOCKED));
-		Set<String> bridges = new HashSet<>(asList(BRIDGES));
-		Set<String> defaultBridges = new HashSet<>(asList(DEFAULT_BRIDGES));
-		Set<String> nonDefaultBridges =
-				new HashSet<>(asList(NON_DEFAULT_BRIDGES));
-		Set<String> dpiBridges = new HashSet<>(asList(DPI_BRIDGES));
-		// BRIDGES should be a subset of BLOCKED
-		assertTrue(blocked.containsAll(bridges));
-		// BRIDGES should be the union of the bridge type sets
-		Set<String> union = new HashSet<>(defaultBridges);
-		union.addAll(nonDefaultBridges);
-		union.addAll(dpiBridges);
-		assertEquals(bridges, union);
-		// The bridge type sets should not overlap
-		assertEmptyIntersection(defaultBridges, nonDefaultBridges);
-		assertEmptyIntersection(defaultBridges, dpiBridges);
-		assertEmptyIntersection(nonDefaultBridges, dpiBridges);
+	public void testGetSuitableBridgeTypes() {
+		for (String countryCode : COUNTRIES_DEFAULT_BRIDGES) {
+			testBridgesAreSuitableAndExist(DEFAULT_OBFS4, countryCode);
+		}
+		for (String countryCode : COUNTRIES_NON_DEFAULT_BRIDGES) {
+			testBridgesAreSuitableAndExist(NON_DEFAULT_OBFS4, countryCode);
+			testBridgesAreSuitableAndExist(VANILLA, countryCode);
+		}
+		for (String countryCode : COUNTRIES_MEEK_BRIDGES) {
+			testBridgesAreSuitableAndExist(MEEK, countryCode);
+		}
+		for (String countryCode : COUNTRIES_SNOWFLAKE_BRIDGES) {
+			testBridgesAreSuitableAndExist(SNOWFLAKE, countryCode);
+		}
+		// If bridges are enabled manually in a country with no specific bridge recommendations,
+		// we should use default obfs4 and vanilla
+		testBridgesAreSuitableAndExist(DEFAULT_OBFS4, "US");
+		testBridgesAreSuitableAndExist(VANILLA, "US");
 	}
 
 	@Test
-	public void testGetBestBridgeType() {
-		for (String country : DEFAULT_BRIDGES) {
-			assertEquals(asList(DEFAULT_OBFS4, VANILLA),
-					provider.getSuitableBridgeTypes(country));
-		}
-		for (String country : NON_DEFAULT_BRIDGES) {
-			assertEquals(asList(NON_DEFAULT_OBFS4, VANILLA),
-					provider.getSuitableBridgeTypes(country));
-		}
-		for (String country : DPI_BRIDGES) {
-			assertEquals(asList(NON_DEFAULT_OBFS4, MEEK, SNOWFLAKE),
-					provider.getSuitableBridgeTypes(country));
-		}
-		assertEquals(asList(DEFAULT_OBFS4, VANILLA),
-				provider.getSuitableBridgeTypes("ZZ"));
+	public void testIPv6BridgeTypes() {
+		// If we're on an IPv6-only network we'll use meek and snowflake in any country
+		assertFalse(provider.getBridges(MEEK, "US").isEmpty());
+		assertFalse(provider.getBridges(SNOWFLAKE, "US").isEmpty());
 	}
 
-	@Test
-	public void testHasSnowflakeParamsWithLetsEncrypt() {
-		testHasSnowflakeParams(true);
-	}
-
-	@Test
-	public void testHasSnowflakeParamsWithoutLetsEncrypt() {
-		testHasSnowflakeParams(false);
-	}
-
-	private void testHasSnowflakeParams(boolean letsEncrypt) {
-		String tmParams = provider.getSnowflakeParams("TM", letsEncrypt);
-		String defaultParams = provider.getSnowflakeParams("ZZ", letsEncrypt);
-		assertFalse(tmParams.isEmpty());
-		assertFalse(defaultParams.isEmpty());
-		assertNotEquals(defaultParams, tmParams);
-	}
-
-	private <T> void assertEmptyIntersection(Set<T> a, Set<T> b) {
-		Set<T> intersection = new HashSet<>(a);
-		intersection.retainAll(b);
-		assertTrue(intersection.isEmpty());
+	private void testBridgesAreSuitableAndExist(BridgeType type, String countryCode) {
+		assertTrue(provider.getSuitableBridgeTypes(countryCode).contains(type));
+		assertFalse(provider.getBridges(type, countryCode).isEmpty());
 	}
 }

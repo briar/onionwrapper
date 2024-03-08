@@ -6,15 +6,14 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
-import java.util.TreeMap;
 
 import javax.annotation.concurrent.Immutable;
 import javax.inject.Inject;
 
 import static java.util.Arrays.asList;
+import static java.util.Locale.US;
 import static org.briarproject.nullsafety.NullSafety.requireNonNull;
 import static org.briarproject.onionwrapper.CircumventionProvider.BridgeType.DEFAULT_OBFS4;
 import static org.briarproject.onionwrapper.CircumventionProvider.BridgeType.MEEK;
@@ -26,102 +25,68 @@ import static org.briarproject.onionwrapper.CircumventionProvider.BridgeType.VAN
 @NotNullByDefault
 class CircumventionProviderImpl implements CircumventionProvider {
 
-	private final static String BRIDGE_FILE_NAME = "bridges";
-	private final static String SNOWFLAKE_PARAMS_FILE_NAME = "snowflake-params";
-	private final static String DEFAULT_COUNTRY_CODE = "ZZ";
+	private static final String DEFAULT_COUNTRY_CODE = "ZZ";
 
-	private static final Set<String> BLOCKED_IN_COUNTRIES =
-			new HashSet<>(asList(BLOCKED));
-	private static final Set<String> BRIDGE_COUNTRIES =
-			new HashSet<>(asList(BRIDGES));
-	private static final Set<String> DEFAULT_OBFS4_BRIDGE_COUNTRIES =
-			new HashSet<>(asList(DEFAULT_BRIDGES));
-	private static final Set<String> NON_DEFAULT_BRIDGE_COUNTRIES =
-			new HashSet<>(asList(NON_DEFAULT_BRIDGES));
-	private static final Set<String> DPI_COUNTRIES =
-			new HashSet<>(asList(DPI_BRIDGES));
+	private static final Set<String> DEFAULT_BRIDGES =
+			new HashSet<>(asList(COUNTRIES_DEFAULT_BRIDGES));
+	private static final Set<String> NON_DEFAULT_BRIDGES =
+			new HashSet<>(asList(COUNTRIES_NON_DEFAULT_BRIDGES));
+	private static final Set<String> MEEK_BRIDGES =
+			new HashSet<>(asList(COUNTRIES_MEEK_BRIDGES));
+	private static final Set<String> SNOWFLAKE_BRIDGES =
+			new HashSet<>(asList(COUNTRIES_SNOWFLAKE_BRIDGES));
 
 	@Inject
 	CircumventionProviderImpl() {
 	}
 
 	@Override
-	public boolean isTorProbablyBlocked(String countryCode) {
-		return BLOCKED_IN_COUNTRIES.contains(countryCode);
-	}
-
-	@Override
-	public boolean doBridgesWork(String countryCode) {
-		return BRIDGE_COUNTRIES.contains(countryCode);
-	}
-
-	@Override
 	public List<BridgeType> getSuitableBridgeTypes(String countryCode) {
-		if (DEFAULT_OBFS4_BRIDGE_COUNTRIES.contains(countryCode)) {
-			return asList(DEFAULT_OBFS4, VANILLA);
-		} else if (NON_DEFAULT_BRIDGE_COUNTRIES.contains(countryCode)) {
-			return asList(NON_DEFAULT_OBFS4, VANILLA);
-		} else if (DPI_COUNTRIES.contains(countryCode)) {
-			return asList(NON_DEFAULT_OBFS4, MEEK, SNOWFLAKE);
-		} else {
-			return asList(DEFAULT_OBFS4, VANILLA);
+		List<BridgeType> types = new ArrayList<>();
+		if (DEFAULT_BRIDGES.contains(countryCode)) {
+			types.add(DEFAULT_OBFS4);
 		}
+		if (NON_DEFAULT_BRIDGES.contains(countryCode)) {
+			types.add(NON_DEFAULT_OBFS4);
+			types.add(VANILLA);
+		}
+		if (MEEK_BRIDGES.contains(countryCode)) types.add(MEEK);
+		if (SNOWFLAKE_BRIDGES.contains(countryCode)) types.add(SNOWFLAKE);
+		// If we don't have any recommendations for this country then use the defaults
+		if (types.isEmpty()) {
+			types.add(DEFAULT_OBFS4);
+			types.add(VANILLA);
+		}
+		return types;
 	}
 
 	@Override
-	public List<String> getBridges(BridgeType type, String countryCode,
-			boolean letsEncrypt) {
-		InputStream is = requireNonNull(getClass().getClassLoader()
-				.getResourceAsStream(BRIDGE_FILE_NAME));
-		Scanner scanner = new Scanner(is);
+	public List<String> getBridges(BridgeType type, String countryCode, boolean letsEncrypt) {
+		// The `letsEncrypt` parameter is ignored, as no domain-fronted bridges use Let's Encrypt
+		return getBridges(type, countryCode);
+	}
 
+	@Override
+	public List<String> getBridges(BridgeType type, String countryCode) {
+		ClassLoader cl = getClass().getClassLoader();
+		// Try to load bridges that are specific to this country code
+		String filename = makeResourceFilename(type, countryCode);
+		InputStream is = cl.getResourceAsStream(filename);
+		if (is == null) {
+			// No resource for this country code - use the fallback resource
+			filename = makeResourceFilename(type, DEFAULT_COUNTRY_CODE);
+			is = requireNonNull(cl.getResourceAsStream(filename));
+		}
 		List<String> bridges = new ArrayList<>();
+		Scanner scanner = new Scanner(is);
 		while (scanner.hasNextLine()) {
-			String line = scanner.nextLine();
-			if ((type == DEFAULT_OBFS4 && line.startsWith("d ")) ||
-					(type == NON_DEFAULT_OBFS4 && line.startsWith("n ")) ||
-					(type == VANILLA && line.startsWith("v ")) ||
-					(type == MEEK && line.startsWith("m "))) {
-				bridges.add(line.substring(2));
-			} else if (type == SNOWFLAKE && line.startsWith("s ")) {
-				String params = getSnowflakeParams(countryCode, letsEncrypt);
-				bridges.add(line.substring(2) + " " + params);
-			}
+			bridges.add("Bridge " + scanner.nextLine());
 		}
 		scanner.close();
 		return bridges;
 	}
 
-	// Package access for testing
-	@SuppressWarnings("WeakerAccess")
-	String getSnowflakeParams(String countryCode, boolean letsEncrypt) {
-		Map<String, String> params = loadSnowflakeParams();
-		if (countryCode.isEmpty()) countryCode = DEFAULT_COUNTRY_CODE;
-		// If we have parameters for this country code, return them
-		String value = params.get(makeKey(countryCode, letsEncrypt));
-		if (value != null) return value;
-		// Return the default parameters
-		value = params.get(makeKey(DEFAULT_COUNTRY_CODE, letsEncrypt));
-		return requireNonNull(value);
-	}
-
-	private Map<String, String> loadSnowflakeParams() {
-		InputStream is = requireNonNull(getClass().getClassLoader()
-				.getResourceAsStream(SNOWFLAKE_PARAMS_FILE_NAME));
-		Scanner scanner = new Scanner(is);
-		Map<String, String> params = new TreeMap<>();
-		while (scanner.hasNextLine()) {
-			String line = scanner.nextLine();
-			if (line.length() < 5) continue;
-			String key = line.substring(0, 4); // Country code, space, digit
-			String value = line.substring(5);
-			params.put(key, value);
-		}
-		scanner.close();
-		return params;
-	}
-
-	private String makeKey(String countryCode, boolean letsEncrypt) {
-		return countryCode + " " + (letsEncrypt ? "1" : "0");
+	private String makeResourceFilename(BridgeType type, String countryCode) {
+		return "bridges-" + type.letter + "-" + countryCode.toLowerCase(US);
 	}
 }
