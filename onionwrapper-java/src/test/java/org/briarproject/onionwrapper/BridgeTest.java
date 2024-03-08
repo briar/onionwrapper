@@ -30,10 +30,11 @@ import static org.briarproject.onionwrapper.CircumventionProvider.BridgeType.MEE
 import static org.briarproject.onionwrapper.CircumventionProvider.BridgeType.NON_DEFAULT_OBFS4;
 import static org.briarproject.onionwrapper.CircumventionProvider.BridgeType.SNOWFLAKE;
 import static org.briarproject.onionwrapper.CircumventionProvider.BridgeType.VANILLA;
-import static org.briarproject.onionwrapper.CircumventionProvider.COUNTRIES_DEFAULT_BRIDGES;
-import static org.briarproject.onionwrapper.CircumventionProvider.COUNTRIES_MEEK_BRIDGES;
-import static org.briarproject.onionwrapper.CircumventionProvider.COUNTRIES_NON_DEFAULT_BRIDGES;
-import static org.briarproject.onionwrapper.CircumventionProvider.COUNTRIES_SNOWFLAKE_BRIDGES;
+import static org.briarproject.onionwrapper.CircumventionProvider.COUNTRIES_DEFAULT_OBFS4;
+import static org.briarproject.onionwrapper.CircumventionProvider.COUNTRIES_MEEK;
+import static org.briarproject.onionwrapper.CircumventionProvider.COUNTRIES_NON_DEFAULT_OBFS4;
+import static org.briarproject.onionwrapper.CircumventionProvider.COUNTRIES_SNOWFLAKE;
+import static org.briarproject.onionwrapper.CircumventionProvider.COUNTRIES_VANILLA;
 import static org.briarproject.onionwrapper.TestUtils.deleteTestDirectory;
 import static org.briarproject.onionwrapper.TestUtils.getArchitectureForTorBinary;
 import static org.briarproject.onionwrapper.TestUtils.getTestDirectory;
@@ -71,27 +72,29 @@ public class BridgeTest extends BaseTest {
 					if (bridges.add(bridge)) states.add(new Params(bridge, type, stats));
 				}
 			}
-			for (String countryCode : COUNTRIES_DEFAULT_BRIDGES) {
+			for (String countryCode : COUNTRIES_DEFAULT_OBFS4) {
 				for (String bridge : provider.getBridges(DEFAULT_OBFS4, countryCode)) {
 					if (bridges.add(bridge)) states.add(new Params(bridge, DEFAULT_OBFS4, stats));
 				}
 			}
-			for (String countryCode : COUNTRIES_NON_DEFAULT_BRIDGES) {
+			for (String countryCode : COUNTRIES_NON_DEFAULT_OBFS4) {
 				for (String bridge : provider.getBridges(NON_DEFAULT_OBFS4, countryCode)) {
 					if (bridges.add(bridge)) {
 						states.add(new Params(bridge, NON_DEFAULT_OBFS4, stats));
 					}
 				}
+			}
+			for (String countryCode : COUNTRIES_VANILLA) {
 				for (String bridge : provider.getBridges(VANILLA, countryCode)) {
 					if (bridges.add(bridge)) states.add(new Params(bridge, VANILLA, stats));
 				}
 			}
-			for (String countryCode : COUNTRIES_MEEK_BRIDGES) {
+			for (String countryCode : COUNTRIES_MEEK) {
 				for (String bridge : provider.getBridges(MEEK, countryCode)) {
 					if (bridges.add(bridge)) states.add(new Params(bridge, MEEK, stats));
 				}
 			}
-			for (String countryCode : COUNTRIES_SNOWFLAKE_BRIDGES) {
+			for (String countryCode : COUNTRIES_SNOWFLAKE) {
 				for (String bridge : provider.getBridges(SNOWFLAKE, countryCode)) {
 					if (bridges.add(bridge)) states.add(new Params(bridge, SNOWFLAKE, stats));
 				}

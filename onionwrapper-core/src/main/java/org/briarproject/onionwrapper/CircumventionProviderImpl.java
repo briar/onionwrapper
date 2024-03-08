@@ -27,14 +27,13 @@ class CircumventionProviderImpl implements CircumventionProvider {
 
 	private static final String DEFAULT_COUNTRY_CODE = "ZZ";
 
-	private static final Set<String> DEFAULT_BRIDGES =
-			new HashSet<>(asList(COUNTRIES_DEFAULT_BRIDGES));
-	private static final Set<String> NON_DEFAULT_BRIDGES =
-			new HashSet<>(asList(COUNTRIES_NON_DEFAULT_BRIDGES));
-	private static final Set<String> MEEK_BRIDGES =
-			new HashSet<>(asList(COUNTRIES_MEEK_BRIDGES));
-	private static final Set<String> SNOWFLAKE_BRIDGES =
-			new HashSet<>(asList(COUNTRIES_SNOWFLAKE_BRIDGES));
+	private static final Set<String> USE_DEFAULT_OBFS4 =
+			new HashSet<>(asList(COUNTRIES_DEFAULT_OBFS4));
+	private static final Set<String> USE_NON_DEFAULT_OBFS4 =
+			new HashSet<>(asList(COUNTRIES_NON_DEFAULT_OBFS4));
+	private static final Set<String> USE_VANILLA = new HashSet<>(asList(COUNTRIES_VANILLA));
+	private static final Set<String> USE_MEEK = new HashSet<>(asList(COUNTRIES_MEEK));
+	private static final Set<String> USE_SNOWFLAKE = new HashSet<>(asList(COUNTRIES_SNOWFLAKE));
 
 	@Inject
 	CircumventionProviderImpl() {
@@ -43,15 +42,11 @@ class CircumventionProviderImpl implements CircumventionProvider {
 	@Override
 	public List<BridgeType> getSuitableBridgeTypes(String countryCode) {
 		List<BridgeType> types = new ArrayList<>();
-		if (DEFAULT_BRIDGES.contains(countryCode)) {
-			types.add(DEFAULT_OBFS4);
-		}
-		if (NON_DEFAULT_BRIDGES.contains(countryCode)) {
-			types.add(NON_DEFAULT_OBFS4);
-			types.add(VANILLA);
-		}
-		if (MEEK_BRIDGES.contains(countryCode)) types.add(MEEK);
-		if (SNOWFLAKE_BRIDGES.contains(countryCode)) types.add(SNOWFLAKE);
+		if (USE_DEFAULT_OBFS4.contains(countryCode)) types.add(DEFAULT_OBFS4);
+		if (USE_NON_DEFAULT_OBFS4.contains(countryCode)) types.add(NON_DEFAULT_OBFS4);
+		if (USE_VANILLA.contains(countryCode)) types.add(VANILLA);
+		if (USE_MEEK.contains(countryCode)) types.add(MEEK);
+		if (USE_SNOWFLAKE.contains(countryCode)) types.add(SNOWFLAKE);
 		// If we don't have any recommendations for this country then use the defaults
 		if (types.isEmpty()) {
 			types.add(DEFAULT_OBFS4);

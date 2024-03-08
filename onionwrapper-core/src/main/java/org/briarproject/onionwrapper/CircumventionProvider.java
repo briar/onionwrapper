@@ -28,22 +28,27 @@ public interface CircumventionProvider {
 	/**
 	 * Countries where default obfs4 bridges should be used.
 	 */
-	String[] COUNTRIES_DEFAULT_BRIDGES = {"BY"};
+	String[] COUNTRIES_DEFAULT_OBFS4 = {"BY"};
 
 	/**
-	 * Countries where non-default obfs4 and vanilla bridges should be used.
+	 * Countries where non-default obfs4 bridges should be used.
 	 */
-	String[] COUNTRIES_NON_DEFAULT_BRIDGES = {"BY", "CN", "EG", "HK", "IR", "RU"};
+	String[] COUNTRIES_NON_DEFAULT_OBFS4 = {"BY", "CN", "EG", "HK", "IR", "RU"};
+
+	/**
+	 * Countries where vanilla bridges should be used.
+	 */
+	String[] COUNTRIES_VANILLA = {"BY"};
 
 	/**
 	 * Countries where meek bridges should be used.
 	 */
-	String[] COUNTRIES_MEEK_BRIDGES = {"TM"};
+	String[] COUNTRIES_MEEK = {"TM"};
 
 	/**
 	 * Countries where snowflake bridges should be used.
 	 */
-	String[] COUNTRIES_SNOWFLAKE_BRIDGES = {"BY", "CN", "EG", "HK", "IR", "RU", "TM"};
+	String[] COUNTRIES_SNOWFLAKE = {"BY", "CN", "EG", "HK", "IR", "RU", "TM"};
 
 	/**
 	 * Returns the types of bridge connection that are suitable for the given country, or

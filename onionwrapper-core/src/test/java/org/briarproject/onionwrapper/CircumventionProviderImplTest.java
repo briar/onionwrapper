@@ -8,10 +8,11 @@ import static org.briarproject.onionwrapper.CircumventionProvider.BridgeType.MEE
 import static org.briarproject.onionwrapper.CircumventionProvider.BridgeType.NON_DEFAULT_OBFS4;
 import static org.briarproject.onionwrapper.CircumventionProvider.BridgeType.SNOWFLAKE;
 import static org.briarproject.onionwrapper.CircumventionProvider.BridgeType.VANILLA;
-import static org.briarproject.onionwrapper.CircumventionProvider.COUNTRIES_DEFAULT_BRIDGES;
-import static org.briarproject.onionwrapper.CircumventionProvider.COUNTRIES_MEEK_BRIDGES;
-import static org.briarproject.onionwrapper.CircumventionProvider.COUNTRIES_NON_DEFAULT_BRIDGES;
-import static org.briarproject.onionwrapper.CircumventionProvider.COUNTRIES_SNOWFLAKE_BRIDGES;
+import static org.briarproject.onionwrapper.CircumventionProvider.COUNTRIES_DEFAULT_OBFS4;
+import static org.briarproject.onionwrapper.CircumventionProvider.COUNTRIES_MEEK;
+import static org.briarproject.onionwrapper.CircumventionProvider.COUNTRIES_NON_DEFAULT_OBFS4;
+import static org.briarproject.onionwrapper.CircumventionProvider.COUNTRIES_SNOWFLAKE;
+import static org.briarproject.onionwrapper.CircumventionProvider.COUNTRIES_VANILLA;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -22,17 +23,19 @@ public class CircumventionProviderImplTest extends BaseTest {
 
 	@Test
 	public void testGetSuitableBridgeTypes() {
-		for (String countryCode : COUNTRIES_DEFAULT_BRIDGES) {
+		for (String countryCode : COUNTRIES_DEFAULT_OBFS4) {
 			testBridgesAreSuitableAndExist(DEFAULT_OBFS4, countryCode);
 		}
-		for (String countryCode : COUNTRIES_NON_DEFAULT_BRIDGES) {
+		for (String countryCode : COUNTRIES_NON_DEFAULT_OBFS4) {
 			testBridgesAreSuitableAndExist(NON_DEFAULT_OBFS4, countryCode);
+		}
+		for (String countryCode : COUNTRIES_VANILLA) {
 			testBridgesAreSuitableAndExist(VANILLA, countryCode);
 		}
-		for (String countryCode : COUNTRIES_MEEK_BRIDGES) {
+		for (String countryCode : COUNTRIES_MEEK) {
 			testBridgesAreSuitableAndExist(MEEK, countryCode);
 		}
-		for (String countryCode : COUNTRIES_SNOWFLAKE_BRIDGES) {
+		for (String countryCode : COUNTRIES_SNOWFLAKE) {
 			testBridgesAreSuitableAndExist(SNOWFLAKE, countryCode);
 		}
 		// If bridges are enabled manually in a country with no specific bridge recommendations,
