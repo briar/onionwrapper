@@ -112,9 +112,9 @@ public interface TorWrapper {
 	void enableIpv6(boolean ipv6Only) throws IOException;
 
 	/**
-	 * Returns the Obfs4 executable as a File for use with Moat.
+	 * Returns the Lyrebird executable as a File for use with Moat.
 	 */
-	File getObfs4ExecutableFile();
+	File getLyrebirdExecutableFile();
 
 	/**
 	 * The state of the Tor wrapper.

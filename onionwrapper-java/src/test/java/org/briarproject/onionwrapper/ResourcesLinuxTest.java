@@ -20,13 +20,8 @@ public class ResourcesLinuxTest {
 	}
 
 	@Test
-	public void testCanLoadObfs4() {
-		testCanLoadResource("x86_64/obfs4proxy");
-	}
-
-	@Test
-	public void testCanLoadSnowflake() {
-		testCanLoadResource("x86_64/snowflake");
+	public void testCanLoadLyrebird() {
+		testCanLoadResource("x86_64/lyrebird");
 	}
 
 	private void testCanLoadResource(String name) {

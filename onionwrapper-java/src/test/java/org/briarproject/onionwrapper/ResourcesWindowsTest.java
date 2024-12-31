@@ -20,13 +20,8 @@ public class ResourcesWindowsTest {
 	}
 
 	@Test
-	public void testCanLoadObfs4() {
-		testCanLoadResource("x86_64/obfs4proxy.exe");
-	}
-
-	@Test
-	public void testCanLoadSnowflake() {
-		testCanLoadResource("x86_64/snowflake.exe");
+	public void testCanLoadLyrebird() {
+		testCanLoadResource("x86_64/lyrebird.exe");
 	}
 
 	private void testCanLoadResource(String name) {
