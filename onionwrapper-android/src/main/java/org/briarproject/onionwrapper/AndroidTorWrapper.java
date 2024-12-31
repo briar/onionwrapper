@@ -41,14 +41,13 @@ public class AndroidTorWrapper extends AbstractTorWrapper {
 			asList("armeabi-v7a", "arm64-v8a", "x86", "x86_64");
 
 	private static final String TOR_LIB_NAME = "libtor.so";
-	private static final String OBFS4_LIB_NAME = "libobfs4proxy.so";
-	private static final String SNOWFLAKE_LIB_NAME = "libsnowflake.so";
+	private static final String LYREBIRD_LIB_NAME = "liblyrebird.so";
 
 	private static final Logger LOG = getLogger(AndroidTorWrapper.class.getName());
 
 	private final Application app;
 	private final AndroidWakeLock wakeLock;
-	private final File torLib, obfs4Lib, snowflakeLib;
+	private final File torLib, lyrebirdLib;
 
 	/**
 	 * @param app The application instance.
@@ -80,8 +79,7 @@ public class AndroidTorWrapper extends AbstractTorWrapper {
 		wakeLock = wakeLockManager.createWakeLock("TorPlugin");
 		String nativeLibDir = app.getApplicationInfo().nativeLibraryDir;
 		torLib = new File(nativeLibDir, TOR_LIB_NAME);
-		obfs4Lib = new File(nativeLibDir, OBFS4_LIB_NAME);
-		snowflakeLib = new File(nativeLibDir, SNOWFLAKE_LIB_NAME);
+		lyrebirdLib = new File(nativeLibDir, LYREBIRD_LIB_NAME);
 	}
 
 	@Override
@@ -133,13 +131,8 @@ public class AndroidTorWrapper extends AbstractTorWrapper {
 	}
 
 	@Override
-	public File getObfs4ExecutableFile() {
-		return obfs4Lib.exists() ? obfs4Lib : super.getObfs4ExecutableFile();
-	}
-
-	@Override
-	protected File getSnowflakeExecutableFile() {
-		return snowflakeLib.exists() ? snowflakeLib : super.getSnowflakeExecutableFile();
+	public File getLyrebirdExecutableFile() {
+		return lyrebirdLib.exists() ? lyrebirdLib : super.getLyrebirdExecutableFile();
 	}
 
 	@Override
@@ -148,13 +141,8 @@ public class AndroidTorWrapper extends AbstractTorWrapper {
 	}
 
 	@Override
-	protected void installObfs4Executable() throws IOException {
-		installExecutable(super.getObfs4ExecutableFile(), obfs4Lib, OBFS4_LIB_NAME);
-	}
-
-	@Override
-	protected void installSnowflakeExecutable() throws IOException {
-		installExecutable(super.getSnowflakeExecutableFile(), snowflakeLib, SNOWFLAKE_LIB_NAME);
+	protected void installLyrebirdExecutable() throws IOException {
+		installExecutable(super.getLyrebirdExecutableFile(), lyrebirdLib, LYREBIRD_LIB_NAME);
 	}
 
 	private void installExecutable(File extracted, File lib, String libName) throws IOException {

@@ -112,12 +112,8 @@ abstract class AbstractTorWrapper implements EventHandler, TorWrapper {
 	}
 
 	@Override
-	public File getObfs4ExecutableFile() {
-		return new File(torDirectory, "obfs4proxy");
-	}
-
-	protected File getSnowflakeExecutableFile() {
-		return new File(torDirectory, "snowflake");
+	public File getLyrebirdExecutableFile() {
+		return new File(torDirectory, "lyrebird");
 	}
 
 	@Override
@@ -219,8 +215,7 @@ abstract class AbstractTorWrapper implements EventHandler, TorWrapper {
 		//noinspection ResultOfMethodCallIgnored
 		doneFile.delete();
 		installTorExecutable();
-		installObfs4Executable();
-		installSnowflakeExecutable();
+		installLyrebirdExecutable();
 		extract(getConfigInputStream(), configFile);
 		if (!doneFile.createNewFile()) {
 			LOG.warning("Failed to create done file");
@@ -242,22 +237,13 @@ abstract class AbstractTorWrapper implements EventHandler, TorWrapper {
 		if (!torFile.setExecutable(true, true)) throw new IOException();
 	}
 
-	protected void installObfs4Executable() throws IOException {
+	protected void installLyrebirdExecutable() throws IOException {
 		if (LOG.isLoggable(INFO)) {
-			LOG.info("Installing obfs4proxy binary for " + architecture);
+			LOG.info("Installing lyrebird binary for " + architecture);
 		}
-		File obfs4File = getObfs4ExecutableFile();
-		extract(getExecutableInputStream("obfs4proxy"), obfs4File);
-		if (!obfs4File.setExecutable(true, true)) throw new IOException();
-	}
-
-	protected void installSnowflakeExecutable() throws IOException {
-		if (LOG.isLoggable(INFO)) {
-			LOG.info("Installing snowflake binary for " + architecture);
-		}
-		File snowflakeFile = getSnowflakeExecutableFile();
-		extract(getExecutableInputStream("snowflake"), snowflakeFile);
-		if (!snowflakeFile.setExecutable(true, true)) throw new IOException();
+		File lyrebirdFile = getLyrebirdExecutableFile();
+		extract(getExecutableInputStream("lyrebird"), lyrebirdFile);
+		if (!lyrebirdFile.setExecutable(true, true)) throw new IOException();
 	}
 
 	protected InputStream getExecutableInputStream(String basename) {
@@ -288,11 +274,10 @@ abstract class AbstractTorWrapper implements EventHandler, TorWrapper {
 		strb.append("GeoIPFile\n");
 		strb.append("GeoIPv6File\n");
 		append(strb, "ConnectionPadding", 0);
-		String obfs4Path = getObfs4ExecutableFile().getAbsolutePath();
-		append(strb, "ClientTransportPlugin obfs4 exec", obfs4Path);
-		append(strb, "ClientTransportPlugin meek_lite exec", obfs4Path);
-		String snowflakePath = getSnowflakeExecutableFile().getAbsolutePath();
-		append(strb, "ClientTransportPlugin snowflake exec", snowflakePath);
+		String lyrebirdPath = getLyrebirdExecutableFile().getAbsolutePath();
+		append(strb, "ClientTransportPlugin obfs4 exec", lyrebirdPath);
+		append(strb, "ClientTransportPlugin meek_lite exec", lyrebirdPath);
+		append(strb, "ClientTransportPlugin snowflake exec", lyrebirdPath);
 		return new ByteArrayInputStream(strb.toString().getBytes(UTF_8));
 	}
 

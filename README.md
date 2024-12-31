@@ -6,8 +6,8 @@ wrapper can be used for running hidden services.
 The library supports the `obfs4`, `meek_lite` and `snowflake` pluggable transports.
 
 Binaries for Tor and pluggable transports are not included. They can be found in the following
-Maven artifacts: `org.briarproject:{tor,obfs4proxy,snowflake}-{android,linux,macos,windows}`. The
-`obfs4proxy` artifact provides `obfs4` and `meek_lite`.
+Maven artifacts: `org.briarproject:{tor,lyrebird}-{android,linux,macos,windows}`. The
+`lyrebird` artifact provides the `obfs4`, `meek_lite` and `snowflake` transports.
 
 The macOS binaries are not signed, so you will need to sign them when packaging your app.
 
