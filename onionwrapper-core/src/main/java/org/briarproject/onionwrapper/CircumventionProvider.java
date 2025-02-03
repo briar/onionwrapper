@@ -33,7 +33,7 @@ public interface CircumventionProvider {
 	/**
 	 * Countries where non-default obfs4 bridges should be used.
 	 */
-	String[] COUNTRIES_NON_DEFAULT_OBFS4 = {"BY", "CN", "EG", "HK", "IR", "RU"};
+	String[] COUNTRIES_NON_DEFAULT_OBFS4 = {"BY", "CN", "EG", "HK", "IR", "MM", "RU", "TM"};
 
 	/**
 	 * Countries where vanilla bridges should be used.
@@ -48,7 +48,7 @@ public interface CircumventionProvider {
 	/**
 	 * Countries where snowflake bridges should be used.
 	 */
-	String[] COUNTRIES_SNOWFLAKE = {"BY", "CN", "EG", "HK", "IR", "RU", "TM"};
+	String[] COUNTRIES_SNOWFLAKE = {"BY", "CN", "EG", "HK", "IR", "MM", "RU", "TM"};
 
 	/**
 	 * Returns true if bridges should be used by default in the given country.
