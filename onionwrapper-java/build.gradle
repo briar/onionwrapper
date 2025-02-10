@@ -23,8 +23,8 @@ dependencies {
 
     testImplementation project(path: ':onionwrapper-core', configuration: 'testOutput')
     testImplementation 'junit:junit:4.13.2'
-    testImplementation "org.briarproject:tor-$currentOS.id:0.4.8.9-1"
-    testImplementation "org.briarproject:lyrebird-$currentOS.id:0.5.0-2"
+    testImplementation "org.briarproject:tor-$currentOS.id:0.4.8.14"
+    testImplementation "org.briarproject:lyrebird-$currentOS.id:0.5.0-3"
 }
 
 mavenPublishing {
