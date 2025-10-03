@@ -57,4 +57,4 @@ bridge test:
       allow_failure: true
   script:
     - OPTIONAL_TESTS=org.briarproject.onionwrapper.BridgeTest ./gradlew --info onionwrapper-java:test --tests BridgeTest
-  timeout: 4h
+  timeout: 6h
