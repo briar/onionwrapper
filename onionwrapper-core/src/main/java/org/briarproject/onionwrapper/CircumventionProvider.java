@@ -28,7 +28,7 @@ public interface CircumventionProvider {
 	/**
 	 * Countries where default obfs4 bridges should be used.
 	 */
-	String[] COUNTRIES_DEFAULT_OBFS4 = {"BY"};
+	String[] COUNTRIES_DEFAULT_OBFS4 = {};
 
 	/**
 	 * Countries where non-default obfs4 bridges should be used.
@@ -38,7 +38,7 @@ public interface CircumventionProvider {
 	/**
 	 * Countries where vanilla bridges should be used.
 	 */
-	String[] COUNTRIES_VANILLA = {"BY"};
+	String[] COUNTRIES_VANILLA = {};
 
 	/**
 	 * Countries where meek bridges should be used.
